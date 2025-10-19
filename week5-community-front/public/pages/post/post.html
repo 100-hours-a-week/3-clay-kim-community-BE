@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>게시글</title>
+  <link rel="stylesheet" href="/components/header/header.css">
+  <link rel="stylesheet" href="/pages/post/post.css">
+  <link rel="stylesheet" href="/components/postCard/postCard.css">
+  
+</head>
+<body>
+<div class="post-container">
+    <div class="post-header">
+        <h1>안녕하세요, 아무 말 대잔치 게시판 입니다.</h1>
+        <p class="post-description">자유롭게 이야기를 나눠보세요!</p>
+    </div>
+
+    <div class="post-write-section">
+        <button class="btn-write" id="btnWrite">
+        <span>✏️</span>
+        게시글 작성하기
+        </button>
+    </div>
+
+    <div class="post-list" id="postList">
+        <!-- 게시글 목록이 JavaScript로 렌더링됩니다 -->
+        <div class="loading">게시글을 불러오는 중...</div>
+    </div>
+
+    <div class="pagination" id="pagination">
+        <!-- 페이지네이션 버튼이 JavaScript로 렌더링됩니다 -->
+    </div>
+    </div>
+
+    <script type="module" src="/pages/post/post.js"></script>
+    <script type="module" src="/components/header/header.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+/* Post Card Component */
+.post-item {
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.post-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.post-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.post-item-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.post-item-author {
+  font-size: 14px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.post-item-author::before {
+  content: '👤';
+  font-size: 14px;
+}
+
+.post-item-meta {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.post-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #666;
+}
+
+.post-meta-item .icon {
+  font-size: 16px;
+}
+
+.post-item-time {
+  margin-left: auto;
+  font-size: 13px;
+  color: #999;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .post-item {
+    padding: 16px;
+  }
+
+  .post-item-title {
+    font-size: 18px;
+  }
+
+  .post-item-meta {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .post-item-time {
+    margin-left: 0;
+    width: 100%;
+  }
+}
