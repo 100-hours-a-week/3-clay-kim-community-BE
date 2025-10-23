@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글</title>
+    
+    <link rel="stylesheet" href="/components/header/header.css">
+</head>
+<body>
+    <button id="modify">수정</button>
+    <button id="delete">삭제</button>
+    <h1>게시글 입니다.</h1>
+
+    <h2 id="postTitle"></h2>
+    <p id="postNickname"></p>
+    <p id="postContent"></p>
+
+    <div>
+        <button id="likeButton">
+            <p id="likeCount"></p>
+            <p>좋아요</p>
+        </button>
+    </div>
+    <div>
+        <p id="viewCount"></p>
+        <p>조회수</p>
+    </div> 
+    <div>
+        <p id="commentCount"></p>
+        <p>댓글</p>
+    </div>
+        
+
+    <script type="module" src="/components/header/header.js"></script>
+    <script src="/pages/postDetails/postDetails.js"></script>
+</body>
+</html>
