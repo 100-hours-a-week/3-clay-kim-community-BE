@@ -76,8 +76,9 @@ public class SecurityConfig {
         // 경로별 인가
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/auth/*", "/posts", "/users").permitAll()
-                        .anyRequest().authenticated());
+                        .requestMatchers("/**", "/auth/*", "/posts/**", "/posts", "/users", "/posts/{postId}/statuses", "/post-status").permitAll()
+                        .anyRequest().authenticated()
+                );
 
         http
                 .addFilterAt(

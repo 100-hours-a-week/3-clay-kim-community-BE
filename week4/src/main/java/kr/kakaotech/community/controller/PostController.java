@@ -4,11 +4,14 @@ import kr.kakaotech.community.dto.ApiResponse;
 import kr.kakaotech.community.dto.request.PostRegisterRequest;
 import kr.kakaotech.community.dto.response.PostDetailResponse;
 import kr.kakaotech.community.dto.response.PostListResponse;
+import kr.kakaotech.community.dto.response.PostStatusResponse;
 import kr.kakaotech.community.global.FakeUserProvider;
+import kr.kakaotech.community.global.security.CustomUserDetails;
 import kr.kakaotech.community.service.PostService;
 import kr.kakaotech.community.service.PostStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -24,10 +27,10 @@ public class PostController {
      * 게시글 작성
      */
     @PostMapping("/posts")
-    public ResponseEntity<ApiResponse> registerPost(@RequestBody PostRegisterRequest postRegisterRequest) {
-        String fakeUserId = fakeUserProvider.getCurrentUserId().toString();
+    public ResponseEntity<ApiResponse> registerPost(@RequestBody PostRegisterRequest postRegisterRequest, @AuthenticationPrincipal CustomUserDetails principal) {
+        String userId = principal.getUserId();
 
-        postService.registerPost(fakeUserId, postRegisterRequest);
+        postService.registerPost(userId, postRegisterRequest);
 
         ApiResponse apiResponse = new ApiResponse("게시글 등록 성공", null);
         return ResponseEntity.status(201).body(apiResponse);
@@ -39,7 +42,7 @@ public class PostController {
     @GetMapping("/posts")
     public ResponseEntity<ApiResponse<PostListResponse>> getPostList(
             @RequestParam(required = false) Integer cursor,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "5") int size) {
 
         PostListResponse response = postService.getPostList(cursor, size);
 
@@ -54,10 +57,21 @@ public class PostController {
     @GetMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse> getPost(@PathVariable int postId) {
         PostDetailResponse response = postService.getPostDetails(postId);
+
         postStatusService.incrementViewCount(postId);
 
         ApiResponse<PostDetailResponse> apiResponse = new ApiResponse("게시글 상세 내용입니다.", response);
         return ResponseEntity.ok(apiResponse);
+    }
+
+    /**
+     * 게시글의 Status 가져오기
+     */
+    @GetMapping("/posts/{postId}/statuses")
+    public ResponseEntity<ApiResponse<PostStatusResponse>> getPostStatus(@PathVariable int postId) {
+        PostStatusResponse postStatusResponse = postStatusService.getPostStatus(postId);
+
+        return ApiResponse.success("게시글 Status 입니다.", postStatusResponse);
     }
 
     /**
@@ -76,26 +90,33 @@ public class PostController {
      * 게시글 수정
      */
     @PatchMapping("/posts/{postId}")
-    public ResponseEntity<ApiResponse> registerPost(@PathVariable int postId, @RequestBody PostRegisterRequest postRegisterRequest) {
+    public ResponseEntity<ApiResponse<Object>> registerPost(@PathVariable int postId, @RequestBody PostRegisterRequest postRegisterRequest) {
         String fakeUserId = fakeUserProvider.getCurrentUserId().toString();
 
         postService.updatePost(postId, fakeUserId, postRegisterRequest);
 
-        ApiResponse apiResponse = new ApiResponse("게시글 수정 성공", null);
-        return ResponseEntity.status(200).body(apiResponse);
+        return ApiResponse.success("게시글 수정 성공", null);
     }
 
     /**
      * 게시글 삭제
      */
     @PatchMapping("/posts/{postId}/deactivation")
-    public ResponseEntity<ApiResponse> deactivatePost(@PathVariable int postId) {
+    public ResponseEntity<ApiResponse<Object>> deactivatePost(@PathVariable int postId) {
         String fakeUserId = fakeUserProvider.getCurrentUserId().toString();
 
         postService.deletePost(postId, fakeUserId);
 
-        ApiResponse apiResponse = new ApiResponse("삭제 성공", null);
-        return ResponseEntity.ok(apiResponse);
+        return ApiResponse.success("삭제 성공", null);
     }
 
+    /**
+     * 게시글 상태 맞추기
+     */
+    @PostMapping("/post-status")
+    public ResponseEntity<ApiResponse<Object>> syncPostStatus() {
+        postStatusService.syncToDatabase();
+
+        return ApiResponse.success("싱크 성공", null);
+    }
 }

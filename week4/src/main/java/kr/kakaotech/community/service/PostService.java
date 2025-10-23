@@ -4,15 +4,15 @@ import kr.kakaotech.community.dto.request.PostRegisterRequest;
 import kr.kakaotech.community.dto.response.PostDetailResponse;
 import kr.kakaotech.community.dto.response.PostListResponse;
 import kr.kakaotech.community.dto.response.PostSummaryResponse;
-import kr.kakaotech.community.entity.Image;
-import kr.kakaotech.community.entity.Post;
-import kr.kakaotech.community.entity.PostImage;
-import kr.kakaotech.community.entity.User;
+import kr.kakaotech.community.entity.*;
 import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.PostRepository;
+import kr.kakaotech.community.repository.PostStatusRepository;
 import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,8 +23,9 @@ import java.util.UUID;
 @Service
 public class PostService {
 
-    private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final PostStatusRepository postStatusRepository;
 
     /**
      * Post 등록
@@ -36,6 +37,7 @@ public class PostService {
 
         Post post = Post.toEntity(request, getUser);
 
+        // 이미지 저장
         if (request.getUrlList() != null) {
             for (String url : request.getUrlList()) {
                 Image image = new Image(url);
@@ -44,7 +46,12 @@ public class PostService {
             }
         }
 
-        postRepository.save(post);
+        Post savedPost = postRepository.saveAndFlush(post);
+//        PostStatus postStatus = postStatusRepository.findById(savePost.getId()).get();
+//        postStatus.updateCount(0, 0, 0);
+        System.out.println("=== postId: " + savedPost.getId());  // 여기서 2 찍히는지 확인
+        PostStatus status = new PostStatus(savedPost);
+        postStatusRepository.save(status);
     }
 
     /**
@@ -73,25 +80,58 @@ public class PostService {
         post.updatePost(request);
     }
 
+//    /**
+//     * 게시글 목록 조회
+//     */
+//    @Transactional
+//    public PostListResponse getPostList(Integer cursor, int size) {
+//        Pageable pageable = PageRequest.of(0, size);
+//        List<Object[]> resultList;
+//
+//        if (cursor == null) {
+////            posts = postRepository.findTopPost(size);
+//            resultList = postRepository.findTopPost(pageable);
+//        } else {
+////            posts = postRepository.findPostByCursor(cursor, size);
+//            resultList = postRepository.findPostByCursor(cursor, pageable);
+//        }
+//
+//        boolean hasNext = resultList.size() == size;
+//        Integer nextCursor = hasNext ? resultList.get(resultList.size() - 1).getId() : null;
+//
+//        List<PostSummaryResponse> postList = resultList.stream()
+//                .map(PostSummaryResponse::fromEntity)
+//                .toList();
+//
+//        return new PostListResponse(postList, nextCursor, hasNext);
+//    }
+
     /**
      * 게시글 목록 조회
      */
     @Transactional
     public PostListResponse getPostList(Integer cursor, int size) {
-        List<Post> posts;
+        Pageable pageable = PageRequest.of(0, size);
+        List<Object[]> resultList;
 
         if (cursor == null) {
-            posts = postRepository.findTopPost(size);
+//            posts = postRepository.findTopPost(size);
+            resultList = postRepository.findTopPost(pageable);
         } else {
-            posts = postRepository.findPostByCursor(cursor, size);
+//            posts = postRepository.findPostByCursor(cursor, size);
+            resultList = postRepository.findPostByCursor(cursor, pageable);
         }
 
-        boolean hasNext = posts.size() == size;
-        Integer nextCursor = hasNext ? posts.get(posts.size() - 1).getId() : null;
-
-        List<PostSummaryResponse> postList = posts.stream()
-                .map(PostSummaryResponse::fromEntity)
+        List<PostSummaryResponse> postList = resultList.stream()
+                .map(result -> {
+                    Post post = (Post) result[0];
+                    PostStatus postStatus = (PostStatus) result[1];
+                    return PostSummaryResponse.fromEntity(post, postStatus);
+                })
                 .toList();
+
+        boolean hasNext = resultList.size() == size;
+        Integer nextCursor = hasNext ? postList.get(postList.size() - 1).getId() : null;
 
         return new PostListResponse(postList, nextCursor, hasNext);
     }

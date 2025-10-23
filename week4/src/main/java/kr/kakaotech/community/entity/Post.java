@@ -10,12 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+//@Table(name = "posts")
 @Entity(name = "posts")
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "INT UNSIGNED")
-    private int id;
+//    @Column(columnDefinition = "INT UNSIGNED")
+    private Integer id;
     @Column(length = 26, nullable = false)
     private String title;
     @Column(length = 3000, nullable = false)

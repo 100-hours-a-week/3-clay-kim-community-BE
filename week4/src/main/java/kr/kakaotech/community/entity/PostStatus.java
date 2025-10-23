@@ -10,7 +10,7 @@ import org.hibernate.annotations.ColumnDefault;
 @Entity(name = "post_statuses")
 public class PostStatus {
     @Id
-    private int postId;
+    private Integer postId;
 
     @MapsId
     @OneToOne(fetch = FetchType.LAZY)
@@ -31,7 +31,7 @@ public class PostStatus {
 
     public PostStatus(Post post) {
         this.post = post;
-        this.postId = post.getId();
+//        this.postId = post.getId();
         this.viewCount = 0;
         this.likeCount = 0;
         this.commentCount = 0;
