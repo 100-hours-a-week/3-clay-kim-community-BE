@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>아이디로 회원가입 | 아무 말 대잔치</title>
+  <link rel="stylesheet" href="idRegister.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 왼쪽 소개 -->
+    <div class="intro-section">
+      <div class="intro-inner">
+        <h1 class="title">아무 말 대잔치</h1>
+        <p class="subtitle">자유롭게 이야기 나누는 커뮤니티</p>
+        <p class="desc">로그인하면 게시글 작성, 댓글, 포인트 등 다양한 기능을 이용할 수 있습니다.</p>
+        <p class="login-text">
+          이미 계정이 있으신가요? <a href="/pages/login/login.html" class="login-link">로그인</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- 오른쪽 회원가입 폼 -->
+    <div class="register-section">
+      <h2>아이디로 회원가입</h2>
+
+      <form id="registerForm" class="register-form">
+        <label for="email">이메일</label>
+        <input type="email" id="email" name="email" placeholder="example@email.com" required>
+
+        <label for="nickname">닉네임</label>
+        <input type="text" id="nickname" name="nickname" placeholder="닉네임을 입력하세요" required>
+
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" required>
+
+        <label for="confirmPassword">비밀번호 확인</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="비밀번호를 다시 입력하세요" required>
+
+        <button type="submit" class="btn submit">회원가입</button>
+      </form>
+
+      <p class="back-text">
+        <a href="register.html" class="back-link">← 간편가입으로 돌아가기</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // 간단한 검증 예시 (나중에 실제 fetch로 대체 가능)
+    document.getElementById("registerForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const pw = document.getElementById("password").value;
+      const pwConfirm = document.getElementById("confirmPassword").value;
+
+      if (pw !== pwConfirm) {
+        alert("비밀번호가 일치하지 않습니다.");
+        return;
+      }
+
+      alert("회원가입이 완료되었습니다!");
+      // TODO: 실제 fetch("/api/register", { method: "POST", body: JSON.stringify(...)" })
+      // 로직 추가 예정
+    });
+  </script>
+</body>
+</html>

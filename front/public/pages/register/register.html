@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>회원가입 | 아무 말 대잔치</title>
+  <link rel="stylesheet" href="register.css">
+  <link rel="stylesheet" href="/components/header/header.css">
+</head>
+</head>
+<body>
+  <div class="container">
+    <!-- 왼쪽: 고정 영역 -->
+    <div class="intro-section">
+      <div class="intro-inner">
+        <h1 class="title">아무 말 대잔치</h1>
+        <p class="subtitle">함께 이야기 나누는 커뮤니티</p>
+        <ul class="benefits">
+          <li>자유롭게 이야기 나누는 공간!</li>
+          <li>공감과 토론, 그리고 포인트!</li>
+          <li>커뮤니티 활동으로 성장하세요!</li>
+        </ul>
+        <p class="login-text">
+          이미 계정이 있으신가요?
+          <a href="/pages/login/login.html" class="login-link">로그인</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 동적으로 바뀌는 영역 -->
+    <div id="content-area" class="register-section">
+      <!-- 기본화면: 간편가입 -->
+      <h2>회원가입</h2>
+      <p class="register-desc">네이버, 카카오로 간편하게 시작하세요!</p>
+
+      <button class="btn naver">N 네이버로 시작하기</button>
+      <button class="btn kakao">카카오로 시작하기</button>
+
+      <div class="divider">또는</div>
+
+      <button class="btn id-signup">아이디로 회원가입</button>
+
+      <footer>
+        <p>© 아무 말 대잔치 | 이용약관 | 개인정보처리방침</p>
+      </footer>
+    </div>
+  </div>
+
+  <script src="register.js"></script>
+  <script type="module" src="/components/header/header.js"></script>
+</body>
+</html>

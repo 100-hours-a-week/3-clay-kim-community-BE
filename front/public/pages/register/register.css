@@ -1,0 +1,259 @@
+body {
+  margin: 0;
+  font-family: "Noto Sans KR", sans-serif;
+  color: #333;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+/* 왼쪽 */
+.intro-section {
+  flex: 1;
+  background-color: #fafafa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.intro-inner {
+  max-width: 480px;
+  text-align: left;
+}
+
+.title {
+  font-size: 36px;
+  color: #e60012;
+}
+
+.subtitle {
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.benefits {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 30px;
+}
+
+.login-text {
+  margin-top: 20px;
+}
+
+.login-link {
+  color: #0066cc;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+/* 오른쪽 */
+.register-section {
+  flex: 1;
+  padding: 80px 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-left: 1px solid #ddd;
+}
+
+.register-section h2 {
+  font-size: 26px;
+  margin-bottom: 10px;
+}
+
+.register-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+/* 버튼 */
+.btn {
+  width: 280px;
+  height: 50px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  transition: 0.2s;
+}
+
+.btn.naver { background-color: #03c75a; color: white; }
+.btn.kakao { background-color: #fee500; color: #3c1e1e; }
+.btn.id-signup { background-color: #e0e0e0; color: #333; }
+.btn.submit { background-color: #e60012; color: white; }
+.btn.check { background-color: #999; color: white; width: 100px; margin-left: 10px; }
+
+.btn:hover { opacity: 0.9; }
+
+/* 구분선 */
+.divider {
+  margin: 25px 0;
+  color: #999;
+  font-size: 14px;
+  position: relative;
+}
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 80px;
+  height: 1px;
+  background-color: #ddd;
+}
+.divider::before { left: -90px; }
+.divider::after { right: -90px; }
+
+/* 폼 */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+}
+
+.register-form label {
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #444;
+}
+
+.register-form input {
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+}
+
+.error {
+  color: #e60012;
+  font-size: 13px;
+  margin-bottom: 10px;
+  height: 16px;
+}
+
+.register-form {
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* 그룹별 정렬 */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #444;
+}
+
+/* 인풋 줄 */
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 인풋 박스 */
+input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #e60012;
+}
+
+/* 버튼 정렬 */
+.btn.submit {
+  background-color: #e60012;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  height: 48px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.btn.submit:hover {
+  opacity: 0.9;
+}
+
+.btn.small {
+  width: 90px;
+  height: 40px;
+  font-size: 14px;
+  background-color: #888;
+  color: white;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn.small:hover {
+  opacity: 0.85;
+}
+
+/* 오류 메세지 */
+.error {
+  font-size: 13px;
+  height: 16px;
+  margin-top: 4px;
+}
+
+/* 전체 폼 간격 */
+.back-text {
+  margin-top: 25px;
+}
+
+.back-link {
+  color: #444;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+/* 기존 register.css 하단에 추가 */
+.loading-dots {
+  display: inline-block;
+}
+.loading-dots span {
+  animation: blink 1s infinite;
+  font-weight: bold;
+  margin-right: 2px;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}
+
