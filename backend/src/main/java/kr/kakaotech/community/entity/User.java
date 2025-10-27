@@ -78,6 +78,10 @@ public class User {
         this.deletedAt = LocalDateTime.now();
     }
 
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
+    }
+
     public static User toEntity(UserRegisterRequest userDto, Image image) {
         return new User(
                 userDto.getEmail(),

@@ -2,9 +2,11 @@ package kr.kakaotech.community.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import kr.kakaotech.community.dto.ApiResponse;
+import kr.kakaotech.community.dto.request.UserPasswordRequest;
 import kr.kakaotech.community.dto.request.UserRegisterRequest;
 import kr.kakaotech.community.dto.request.UserUpdateRequest;
 import kr.kakaotech.community.dto.response.UserDetailResponse;
+import kr.kakaotech.community.global.security.CustomUserDetails;
 import kr.kakaotech.community.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -86,5 +89,24 @@ public class UserController {
         String userInfo = uri.substring(uri.lastIndexOf('/') + 1);
 
         return ApiResponse.success("duplication 결과", userService.duplicateCheckUserInfo(userInfo, email));
+    }
+
+    /**
+     * 닉네임 실시간 중복 검증
+     */
+    @GetMapping("/users/nickname")
+    public ResponseEntity<ApiResponse<Boolean>> checkUserNickname(@RequestParam String nickname, HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String userInfo = uri.substring(uri.lastIndexOf('/') + 1);
+
+        return ApiResponse.success("duplication 결과", userService.duplicateCheckUserInfo(userInfo, nickname));
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    @PatchMapping("/users/password")
+    public ResponseEntity<ApiResponse<Boolean>> changePassword(@RequestBody UserPasswordRequest userPasswordRequest, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponse.success("비밀번호 수정 결과", userService.changePassword(userDetails.getUserId(), userPasswordRequest));
     }
 }
