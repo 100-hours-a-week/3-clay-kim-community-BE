@@ -58,7 +58,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         } catch (Exception e) {
             // 기타 에러
             log.error("ERROR: LoginFilter error : ", e);
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+            throw new CustomException(ErrorCode.SERVER_ERROR);
         }
     }
 

@@ -16,6 +16,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequiredArgsConstructor
 @RestController
@@ -26,12 +27,11 @@ public class UserController {
     /**
      * 회원가입
      */
-    @PostMapping("/users")
-    public ResponseEntity<ApiResponse> register(@RequestBody UserRegisterRequest userDto) {
-        userService.registerUser(userDto);
+    @PostMapping(value = "/users")
+    public ResponseEntity<ApiResponse<String>> register(@ModelAttribute UserRegisterRequest userDto, @RequestParam("profileImage") MultipartFile image) {
+        userService.registerUser(userDto, image);
 
-        ApiResponse response = new ApiResponse("회원가입 성공", userDto.getEmail());
-        return ResponseEntity.status(201).body(response);
+        return ApiResponse.create("회원가입 성공", userDto.getEmail());
     }
 
     /**
@@ -39,10 +39,9 @@ public class UserController {
      */
     @GetMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<UserDetailResponse>> getUser(@PathVariable String userId) {
-        UserDetailResponse user = userService.getUser(userId);
+        UserDetailResponse userDetailResponse = userService.getUser(userId);
 
-        ApiResponse<UserDetailResponse> response = new ApiResponse<>("단일 회원 조회 성공", user);
-        return ResponseEntity.status(200).body(response);
+        return ApiResponse.success("단일 회원 조회 성공", userDetailResponse);
     }
 
     /**

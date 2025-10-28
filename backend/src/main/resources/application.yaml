@@ -25,6 +25,11 @@ spring:
   thymeleaf:
     cache: true
 
+  servlet:
+    multipart:
+      max-file-size: 10MB       # 파일 하나의 최대 크기
+      max-request-size: 30MB    # 요청 전체 크기 (파일 여러 개 업로드 시 합산)
+
 jwt:
   expirationtime:
 #    accessTime: 216000
@@ -37,3 +42,5 @@ logging:
   level:
     org.hibernate.SQL: debug
 
+upload-dir:
+  image: uploads/images

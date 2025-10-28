@@ -37,3 +37,6 @@ target/
 
 # secret
 /src/main/resources/application-secret.yml
+
+# image
+/uploads/*

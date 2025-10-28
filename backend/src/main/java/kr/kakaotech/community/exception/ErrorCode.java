@@ -35,21 +35,27 @@ public enum ErrorCode {
     LOGIN_FAIL("로그인 실패", HttpStatus.UNAUTHORIZED),
 
     /**
-     * ERROR
-     */
-    INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", HttpStatus.INTERNAL_SERVER_ERROR),
-
-    /**
      * JWT
      */
     EXPIRED_JWT("JWT 기간 만료되었습니다.", HttpStatus.UNAUTHORIZED),
+
+    /**
+     * 이미지 에러
+     */
+    NOT_FOUND_IMAGE("이미지를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    BAD_CONTENT_TYPE("이미지가 아닙니다.", HttpStatus.BAD_REQUEST),
 
     /**
      * 권한 에러
      */
     FORBIDDEN("권한이 없습니다.", HttpStatus.FORBIDDEN),
     UNAUTHORIZED("접근할 수 없습니다.", HttpStatus.UNAUTHORIZED),
-    BAD_REQUEST("잘못된 요청입니다.", HttpStatus.BAD_REQUEST);
+    BAD_REQUEST("잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
+
+    /**
+     * ERROR
+     */
+    SERVER_ERROR("INTERNAL_SERVER_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String message;
     private final HttpStatus status;

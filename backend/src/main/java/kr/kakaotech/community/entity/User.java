@@ -48,13 +48,12 @@ public class User {
     public User() {
     }
 
-    public User(String email, String password, String nickname, String role, Image image) {
+    public User(String email, String password, String nickname, String role) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.role = UserRole.valueOf(role.toUpperCase());
         this.createdAt = LocalDateTime.now();
-        this.image = image;
     }
 
     public void updateUser(UserUpdateRequest request) {
@@ -82,13 +81,7 @@ public class User {
         this.password = newPassword;
     }
 
-    public static User toEntity(UserRegisterRequest userDto, Image image) {
-        return new User(
-                userDto.getEmail(),
-                userDto.getPassword(),
-                userDto.getNickname(),
-                userDto.getRole(),
-                image
-        );
+    public void addImage(Image image) {
+        this.image = image;
     }
 }

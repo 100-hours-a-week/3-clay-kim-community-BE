@@ -11,7 +11,7 @@ public class UserDetailResponse {
     String id;
     String email;
     String nickname;
-    String url;
     Boolean deleted;
     String role;
+    String imageFile;
 }

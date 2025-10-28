@@ -13,6 +13,5 @@ public class UserRegisterRequest {
     private String email;
     private String password;
     private String nickname;
-    private String url;
     private String role;
 }

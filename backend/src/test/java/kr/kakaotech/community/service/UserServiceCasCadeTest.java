@@ -32,7 +32,7 @@ class UserServiceCasCadeTest {
     void hardDeleteUser_cascade_동작확인() {
         // given
         Image image = new Image("https://s3.com/clay_profile.jpg");
-        User user = new User("clay@test.kr", "123123", "clay", "USER", image);
+        User user = new User("clay@test.kr", "123123", "clay", "USER");
 
         userRepository.save(user);
         UUID userId = user.getId();

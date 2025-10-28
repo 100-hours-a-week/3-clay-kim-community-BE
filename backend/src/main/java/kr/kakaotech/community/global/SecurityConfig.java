@@ -76,7 +76,7 @@ public class SecurityConfig {
         // 경로별 인가
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/**", "/auth/*", "/posts/**", "/posts", "/users", "/posts/{postId}/statuses", "/post-status").permitAll()
+                        .requestMatchers("/**", "/auth/*", "/posts/**", "/posts", "/users", "/posts/{postId}/statuses", "/post-status", "/images/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
