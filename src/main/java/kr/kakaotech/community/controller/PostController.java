@@ -1,5 +1,6 @@
 package kr.kakaotech.community.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import kr.kakaotech.community.dto.ApiResponse;
 import kr.kakaotech.community.dto.request.PostRegisterRequest;
 import kr.kakaotech.community.dto.response.PostDetailResponse;
@@ -11,7 +12,6 @@ import kr.kakaotech.community.service.PostService;
 import kr.kakaotech.community.service.PostStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -27,10 +27,8 @@ public class PostController {
      * 게시글 작성
      */
     @PostMapping("/posts")
-    public ResponseEntity<ApiResponse<Integer>> registerPost(@RequestBody PostRegisterRequest postRegisterRequest, @AuthenticationPrincipal CustomUserDetails principal) {
-        String userId = principal.getUserId();
-
-        return ApiResponse.create("게시글 등록 성공", postService.registerPost(userId, postRegisterRequest));
+    public ResponseEntity<ApiResponse<Integer>> registerPost(@RequestBody PostRegisterRequest postRegisterRequest, HttpServletRequest httpServletRequest) {
+        return ApiResponse.create("게시글 등록 성공", postService.registerPost(httpServletRequest.getAttribute("userId").toString(), postRegisterRequest));
     }
 
     /**
@@ -87,9 +85,9 @@ public class PostController {
      * 게시글 수정
      */
     @PatchMapping("/posts/{postId}")
-    public ResponseEntity<ApiResponse<Object>> registerPost(@PathVariable int postId, @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody PostRegisterRequest postRegisterRequest) {
+    public ResponseEntity<ApiResponse<Object>> registerPost(@PathVariable int postId, HttpServletRequest httpServletRequest, @RequestBody PostRegisterRequest postRegisterRequest) {
 
-        String userId = userDetails.getUserId();
+        String userId = httpServletRequest.getAttribute("userId").toString();
 
         postService.updatePost(postId, userId, postRegisterRequest);
 
@@ -100,8 +98,8 @@ public class PostController {
      * 게시글 삭제
      */
     @PatchMapping("/posts/{postId}/deactivation")
-    public ResponseEntity<ApiResponse<Object>> deactivatePost(@PathVariable int postId, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        postService.deletePost(postId, userDetails.getUserId());
+    public ResponseEntity<ApiResponse<Object>> deactivatePost(@PathVariable int postId, HttpServletRequest httpServletRequest) {
+        postService.deletePost(postId, httpServletRequest.getAttribute("userId").toString());
 
         return ApiResponse.success("삭제 성공", null);
     }

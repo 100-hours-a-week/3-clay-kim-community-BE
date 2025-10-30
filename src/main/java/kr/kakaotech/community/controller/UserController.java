@@ -14,7 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -105,7 +104,8 @@ public class UserController {
      * 비밀번호 변경
      */
     @PatchMapping("/users/password")
-    public ResponseEntity<ApiResponse<Boolean>> changePassword(@RequestBody UserPasswordRequest userPasswordRequest, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ApiResponse.success("비밀번호 수정 결과", userService.changePassword(userDetails.getUserId(), userPasswordRequest));
+    public ResponseEntity<ApiResponse<Boolean>> changePassword(@RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest httpServletRequest) {
+        boolean isChangePassword = userService.changePassword(httpServletRequest.getAttribute("userId").toString(), userPasswordRequest);
+        return ApiResponse.success("비밀번호 수정 결과", isChangePassword);
     }
 }

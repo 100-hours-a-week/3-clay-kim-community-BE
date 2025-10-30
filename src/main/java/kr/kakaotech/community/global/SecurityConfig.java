@@ -1,17 +1,11 @@
 package kr.kakaotech.community.global;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kr.kakaotech.community.global.jwt.JwtFilter;
-import kr.kakaotech.community.global.jwt.JwtUtil;
+import kr.kakaotech.community.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,10 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Configuration
 public class SecurityConfig {
-
-    private final AuthenticationConfiguration authenticationConfiguration;
-    private final JwtUtil jwtUtil;
-    private final ObjectMapper objectMapper;
 
     // CORS Configuration을 Bean으로 등록
     @Bean
@@ -58,38 +48,4 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // CORS, CSRF, formLogin 설정
-        http
-                .csrf(auth -> {
-                    auth.disable();
-                    log.info("CSRF enabled");
-                })
-                .formLogin(auth -> auth.disable())
-                .httpBasic(auth -> auth.disable())
-                // session 설정을 stateless 로 변경
-                .sessionManagement((session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)));
-
-        // 경로별 인가
-        http
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/**", "/auth/*", "/posts/**", "/posts", "/users", "/posts/{postId}/statuses", "/post-status", "/images/**").permitAll()
-                        .anyRequest().authenticated()
-                );
-
-        http
-                .addFilterAt(
-                        new LoginFilter(authenticationConfiguration.getAuthenticationManager(), jwtUtil, objectMapper),
-                        UsernamePasswordAuthenticationFilter.class
-                );
-
-        http
-                .addFilterAfter(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
-
 }
