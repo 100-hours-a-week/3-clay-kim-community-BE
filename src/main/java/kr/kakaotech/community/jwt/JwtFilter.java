@@ -28,7 +28,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     // 필터 제외 경로 목록
     private static final String[] EXCLUDED_PATHS = {
-            "/auth", "/refresh", "/error", "/posts"
+            "/auth", "/error", "/posts"
     };
 
     // 필터 제외 경로 설정
@@ -51,14 +51,9 @@ public class JwtFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         log.info("[JwtFilter] 요청 URI: {}", requestURI);
 
-        boolean isIndex = isIndexRequest(request);
-        Optional<String> token = extractToken(request);
+        Optional<String> token = extractToken(request, "accessToken");
 
         if (token.isEmpty()) {
-            if (isIndex) {
-                response.sendRedirect("/login");
-                return;
-            }
             filterChain.doFilter(request, response);
             return;
         }
@@ -75,10 +70,16 @@ public class JwtFilter extends OncePerRequestFilter {
         return "/".equals(uri) || "/index".equals(uri);
     }
 
+    // refresh 요청인지 확인
+    private boolean isRefresh (HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return "/refresh".equals(uri);
+    }
+
     // 토큰 추출
-    private Optional<String> extractToken(HttpServletRequest request) {
-        return extractTokenFromHeader(request)
-                .or(() -> extractTokenFromCookie(request));
+    private Optional<String> extractToken(HttpServletRequest request, String tokenName) {
+        return extractTokenFromCookie(request, tokenName)
+                .or(() -> extractTokenFromHeader(request));
     }
 
     // 헤더 토큰 추출
@@ -89,11 +90,11 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     // 쿠키 토큰 추출
-    private Optional<String> extractTokenFromCookie(HttpServletRequest request) {
+    private Optional<String> extractTokenFromCookie(HttpServletRequest request, String tokenName) {
         return Optional.ofNullable(request.getCookies())
                 .stream()
                 .flatMap(Arrays::stream)
-                .filter(cookie -> "accessToken".equals(cookie.getName()))
+                .filter(cookie -> tokenName.equals(cookie.getName()))
                 .map(Cookie::getValue)
                 .findFirst();
     }

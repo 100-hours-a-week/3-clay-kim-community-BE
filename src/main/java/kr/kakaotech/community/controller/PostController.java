@@ -6,8 +6,6 @@ import kr.kakaotech.community.dto.request.PostRegisterRequest;
 import kr.kakaotech.community.dto.response.PostDetailResponse;
 import kr.kakaotech.community.dto.response.PostListResponse;
 import kr.kakaotech.community.dto.response.PostStatusResponse;
-import kr.kakaotech.community.global.FakeUserProvider;
-import kr.kakaotech.community.global.security.CustomUserDetails;
 import kr.kakaotech.community.service.PostService;
 import kr.kakaotech.community.service.PostStatusService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 public class PostController {
 
-    private final FakeUserProvider fakeUserProvider;
     private final PostService postService;
     private final PostStatusService postStatusService;
 
@@ -67,18 +64,6 @@ public class PostController {
         PostStatusResponse postStatusResponse = postStatusService.getPostStatus(postId);
 
         return ApiResponse.success("게시글 Status 입니다.", postStatusResponse);
-    }
-
-    /**
-     * 게시글 권한 체크
-     */
-    @GetMapping("/posts/{postId}/auth")
-    public ResponseEntity<ApiResponse<Boolean>> checkPostAuthorization(@PathVariable int postId) {
-        String fakeUserId = fakeUserProvider.getCurrentUserId().toString();
-
-        boolean isAuth = postService.checkAuthorization(postId, fakeUserId);
-        ApiResponse<Boolean> apiResponse = new ApiResponse<>("권한 체크 성공.", isAuth);
-        return ResponseEntity.ok(apiResponse);
     }
 
     /**

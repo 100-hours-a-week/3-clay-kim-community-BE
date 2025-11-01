@@ -39,6 +39,7 @@ public enum ErrorCode {
      */
     EXPIRED_JWT("JWT 기간 만료되었습니다.", HttpStatus.UNAUTHORIZED),
     NON_SIGNATURE_JWT("올바르지않은 서명입니다.", HttpStatus.UNAUTHORIZED),
+    INVALID_TOKEN("토큰이 존재하지 않습니다.", HttpStatus.UNAUTHORIZED),
 
     /**
      * 이미지 에러

@@ -9,6 +9,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class JwtProvider {
@@ -48,7 +49,7 @@ public class JwtProvider {
                 .subject(userId)
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + accessTtlSec))
+                .expiration(new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(accessTtlSec)))
                 .signWith(secretKey)
                 .compact();
     }
@@ -59,7 +60,7 @@ public class JwtProvider {
                 .claim("role", role)
                 .claim("typ", "refresh")
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + refreshTtlSec))
+                .expiration(new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(refreshTtlSec)))
                 .signWith(secretKey)
                 .compact();
     }
