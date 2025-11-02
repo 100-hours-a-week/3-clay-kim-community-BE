@@ -1,7 +1,5 @@
 package kr.kakaotech.community.global;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import kr.kakaotech.community.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
