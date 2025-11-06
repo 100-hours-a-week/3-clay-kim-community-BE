@@ -56,7 +56,7 @@ public class UserService {
         );
 
         // 이미지 저장
-        if (!image.isEmpty()) {
+        if (image != null && !image.isEmpty()) {
             Image imageEntity = imageService.saveImage(image);
             user.addImage(imageEntity);
         }
@@ -79,8 +79,7 @@ public class UserService {
                 getUser.getEmail(),
                 getUser.getNickname(),
                 getUser.getDeleted(),
-                getUser.getRole().toString(),
-                null
+                getUser.getRole().toString()
         );
     }
 
@@ -98,8 +97,7 @@ public class UserService {
                 getUser.getId().toString(),
                 getUser.getEmail(), getUser.getNickname(),
                 getUser.getDeleted(),
-                getUser.getRole().toString(),
-                null
+                getUser.getRole().toString()
         ));
     }
 
@@ -119,8 +117,7 @@ public class UserService {
                 getUser.getEmail(),
                 getUser.getNickname(),
                 getUser.getDeleted(),
-                getUser.getRole().toString(),
-                null
+                getUser.getRole().toString()
         );
     }
 

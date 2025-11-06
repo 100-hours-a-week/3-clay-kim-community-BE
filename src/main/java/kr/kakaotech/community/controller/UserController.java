@@ -27,7 +27,8 @@ public class UserController {
      * 회원가입
      */
     @PostMapping(value = "/users")
-    public ResponseEntity<ApiResponse<String>> register(@ModelAttribute UserRegisterRequest userDto, @RequestParam("profileImage") MultipartFile image) {
+    public ResponseEntity<ApiResponse<String>> register(@ModelAttribute UserRegisterRequest userDto,
+                                                        @RequestPart(value = "profileImage", required = false) MultipartFile image) {
         userService.registerUser(userDto, image);
 
         return ApiResponse.create("회원가입 성공", userDto.getEmail());
