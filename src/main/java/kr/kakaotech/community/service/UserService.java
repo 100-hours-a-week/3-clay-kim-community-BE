@@ -104,10 +104,6 @@ public class UserService {
     /**
      * User 업데이트
      * User의 updateUser()를 통해 변경사항만 업데이트합니다.
-     *
-     * @param userId
-     * @param userUpdateRequest
-     * @return
      */
     @Transactional
     public UserDetailResponse updateUser(String userId, UserUpdateRequest userUpdateRequest) {

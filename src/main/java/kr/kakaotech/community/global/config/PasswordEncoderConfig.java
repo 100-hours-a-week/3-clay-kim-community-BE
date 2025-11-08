@@ -1,4 +1,4 @@
-package kr.kakaotech.community.global;
+package kr.kakaotech.community.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

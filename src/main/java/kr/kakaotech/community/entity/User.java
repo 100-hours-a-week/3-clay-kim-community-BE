@@ -56,19 +56,11 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void updateUser(UserUpdateRequest request) {
-        if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            this.email = request.getEmail();
+    public void updateUser(UserUpdateRequest userUpdateRequest) {
+        if (userUpdateRequest.getNickname() != null && !userUpdateRequest.getNickname().isBlank()) {
+            this.nickname = userUpdateRequest.getNickname();
         }
-        if (request.getNickname() != null && !request.getNickname().isBlank()) {
-            this.nickname = request.getNickname();
-        }
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            this.password = request.getPassword();
-        }
-        if (request.getUrl() != null && !request.getUrl().isBlank()) {
-            this.image.updateImage(request.getUrl());
-        }
+        // TODO : 이미지 처리
     }
 
     public void deleteUser() {

@@ -150,8 +150,6 @@ public class PostService {
             throw new CustomException(ErrorCode.NOT_FOUND_POST);
         }
 
-        post.getUser().getId();
-
         return new PostDetailResponse(
                 post.getTitle(),
                 post.getContent(),

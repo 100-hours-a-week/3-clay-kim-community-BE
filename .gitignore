@@ -27,7 +27,6 @@ logs/
 
 # Build files
 target/
-*.jar
 *.war
 *.nar
 *.ear
