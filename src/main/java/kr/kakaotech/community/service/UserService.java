@@ -129,6 +129,7 @@ public class UserService {
                 getUser.getDeleted(),
                 getUser.getRole().toString(),
                 getUser.getImage().getUrl()
+
         );
     }
 

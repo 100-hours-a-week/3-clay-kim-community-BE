@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+
 import java.util.Random;
 
 @Slf4j
@@ -73,5 +74,4 @@ public class ImageService {
         int randomId = random.nextInt(8) + 1;
         return imageRepository.findById(randomId).get();
     }
-
 }
