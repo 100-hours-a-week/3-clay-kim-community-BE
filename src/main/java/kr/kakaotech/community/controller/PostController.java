@@ -9,10 +9,11 @@ import kr.kakaotech.community.dto.response.PostStatusResponse;
 import kr.kakaotech.community.service.PostService;
 import kr.kakaotech.community.service.PostStatusService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 public class PostController {
@@ -32,28 +33,34 @@ public class PostController {
      * 게시글 목록 불러오기
      */
     @GetMapping("/posts")
-    public ResponseEntity<ApiResponse<PostListResponse>> getPostList(
-            @RequestParam(required = false) Integer cursor,
-            @RequestParam(defaultValue = "5") int size) {
+    public ResponseEntity<ApiResponse<PostListResponse>> getPostList(@RequestParam(required = false) Integer cursor,
+                                                                     @RequestParam(defaultValue = "5") int size,
+                                                                     @RequestParam(required = false) String period) {
+        PostListResponse response;
+        if (period == null) {
+            response = postService.getPostList(cursor, size);
+        } else {
+            response = postService.getLikePostList(cursor, period, size);
+        }
 
-        PostListResponse response = postService.getPostList(cursor, size);
-
-        ApiResponse<PostListResponse> apiResponse = new ApiResponse<>("게시글 목록 조회 성공", response);
-        return ResponseEntity.ok(apiResponse);
+        return ApiResponse.success("게시글 목록 조회 성공", response);
     }
 
+    @GetMapping("/posts/top10")
+    public ResponseEntity<ApiResponse<PostListResponse>> getPostList() {
+        return ApiResponse.success("게시글 목록 조회 성공", postService.getPostTop10List());
+    }
 
     /**
      * 게시글 상세 조회
      */
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<ApiResponse> getPost(@PathVariable int postId) {
+    public ResponseEntity<ApiResponse<PostDetailResponse>> getPost(@PathVariable int postId) {
         PostDetailResponse response = postService.getPostDetails(postId);
 
         postStatusService.incrementViewCount(postId);
 
-        ApiResponse<PostDetailResponse> apiResponse = new ApiResponse("게시글 상세 내용입니다.", response);
-        return ResponseEntity.ok(apiResponse);
+        return ApiResponse.success("게시글 상세 내용입니다.", response);
     }
 
     /**

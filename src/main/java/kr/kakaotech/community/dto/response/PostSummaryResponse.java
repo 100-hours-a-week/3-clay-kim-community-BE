@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @AllArgsConstructor
@@ -18,7 +19,7 @@ public class PostSummaryResponse {
     private int commentCount;
     private int viewCount;
 
-    public static PostSummaryResponse fromEntity(Post post, PostStatus postStatus) {
+    private static PostSummaryResponse fromEntity(Post post, PostStatus postStatus) {
         return new PostSummaryResponse(
                 post.getId(),
                 post.getTitle(),
@@ -28,5 +29,15 @@ public class PostSummaryResponse {
                 postStatus.getLikeCount(),
                 postStatus.getCommentCount()
         );
+    }
+
+    public static List<PostSummaryResponse> fromJoinedList(List<Object[]> resultList) {
+        return resultList.stream()
+                .map(result -> {
+                    Post post = (Post) result[0];
+                    PostStatus postStatus = (PostStatus) result[1];
+                    return PostSummaryResponse.fromEntity(post, postStatus);
+                })
+                .toList();
     }
 }

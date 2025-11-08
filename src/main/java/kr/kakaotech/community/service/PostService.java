@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,24 +48,11 @@ public class PostService {
         }
 
         Post savedPost = postRepository.saveAndFlush(post);
-//        PostStatus postStatus = postStatusRepository.findById(savePost.getId()).get();
-//        postStatus.updateCount(0, 0, 0);
-        System.out.println("=== postId: " + savedPost.getId());  // 여기서 2 찍히는지 확인
+        System.out.println("=== postId: " + savedPost.getId());
         PostStatus status = new PostStatus(savedPost);
         postStatusRepository.save(status);
 
         return savedPost.getId();
-    }
-
-    /**
-     * 게시글 수정 버튼 권한 체크
-     */
-    @Transactional(readOnly = true)
-    public boolean checkAuthorization(int postId, String userId) {
-        Post post = postRepository.findById(postId).orElseThrow(() ->
-                new CustomException(ErrorCode.NOT_FOUND_POST));
-
-        return post.getUser().getId().toString().equals(userId);
     }
 
     /**
@@ -84,33 +72,6 @@ public class PostService {
 
     /**
      * 게시글 목록 조회
-     * size 사용
-     */
-    @Transactional
-    public PostListResponse getPostListBySize(Integer cursor, int size) {
-        Pageable pageable = PageRequest.of(0, size);
-        List<Object[]> resultList;
-
-        if (cursor == null) {
-//            posts = postRepository.findTopPost(size);
-            resultList = postRepository.findTopPost(pageable);
-        } else {
-//            posts = postRepository.findPostByCursor(cursor, size);
-            resultList = postRepository.findPostByCursor(cursor, pageable);
-        }
-
-        boolean hasNext = resultList.size() == size;
-//        Integer nextCursor = hasNext ? resultList.get(resultList.size() - 1).getId() : null;
-
-//        List<PostSummaryResponse> postList = resultList.stream()
-//                .map(PostSummaryResponse::fromEntity)
-//                .toList();
-
-        return new PostListResponse(null, null, hasNext);
-    }
-
-    /**
-     * 게시글 목록 조회
      */
     @Transactional
     public PostListResponse getPostList(Integer cursor, int size) {
@@ -118,25 +79,41 @@ public class PostService {
         List<Object[]> resultList;
 
         if (cursor == null) {
-//            posts = postRepository.findTopPost(size);
             resultList = postRepository.findTopPost(pageable);
         } else {
-//            posts = postRepository.findPostByCursor(cursor, size);
             resultList = postRepository.findPostByCursor(cursor, pageable);
         }
 
-        List<PostSummaryResponse> postList = resultList.stream()
-                .map(result -> {
-                    Post post = (Post) result[0];
-                    PostStatus postStatus = (PostStatus) result[1];
-                    return PostSummaryResponse.fromEntity(post, postStatus);
-                })
-                .toList();
+        return getPostListAndNextCursorResponse(size, resultList);
+    }
 
-        boolean hasNext = resultList.size() == size;
-        Integer nextCursor = hasNext ? postList.get(postList.size() - 1).getId() : null;
+    /**
+     * 기간에 따른 인기글 목록 메서드
+     */
+    public PostListResponse getLikePostList(Integer cursor, String period, int size) {
+        LocalDateTime startDate = switch (period) {
+            case "daily" -> LocalDateTime.now().minusDays(1);
+            case "weekly" -> LocalDateTime.now().minusDays(7);
+            default -> throw new CustomException(ErrorCode.BAD_REQUEST_FILTER);
+        };
 
-        return new PostListResponse(postList, nextCursor, hasNext);
+        List<Object[]> resultList;
+        if (cursor == null) {
+            resultList = postRepository.findPostByLikeCount(startDate, PageRequest.of(0, size));
+        } else {
+            resultList = postRepository.findPostByLikeCount(startDate, PageRequest.of(cursor, size));
+        }
+
+        return getPostListAndNextCursorResponse(size, resultList);
+    }
+
+    /**
+     * TOP 10 좋아요 순서 정렬
+     */
+    public PostListResponse getPostTop10List() {
+        List<Object[]> resultList = postRepository.findTop10Post(PageRequest.of(0, 10));
+
+        return getPostListAndNextCursorResponse(11, resultList);
     }
 
     /**
@@ -172,5 +149,20 @@ public class PostService {
         }
 
         post.deletePost();
+    }
+
+    /**
+     * JPA 결과를 Response로 변환해 줍니다.
+     *
+     * JPA 결과 - Post, PostStatus
+     * List 사이즈를 확인 후 nextCursor와 hasNext 반환
+     */
+    private PostListResponse getPostListAndNextCursorResponse(int size, List<Object[]> resultList) {
+        List<PostSummaryResponse> postList = PostSummaryResponse.fromJoinedList(resultList);
+
+        boolean hasNext = resultList.size() == size;
+        Integer nextCursor = hasNext ? postList.get(postList.size() - 1).getId() : null;
+
+        return new PostListResponse(postList, nextCursor, hasNext);
     }
 }

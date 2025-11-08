@@ -21,6 +21,7 @@ public enum ErrorCode {
      * Post 에러
      */
     NOT_FOUND_POST("존재하지 않는 게시글입니다.", HttpStatus.NOT_FOUND),
+    BAD_REQUEST_FILTER("알맞지 않은 조건입니다.", HttpStatus.BAD_REQUEST),
 
     /**
      * Comment 에러

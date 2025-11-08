@@ -30,6 +30,7 @@ public class User {
     private String nickname;
     @Column(nullable = false)
     @ColumnDefault("false")
+    @Builder.Default
     private Boolean deleted = false;
 
     @Column(nullable = false)
@@ -60,7 +61,6 @@ public class User {
         if (userUpdateRequest.getNickname() != null && !userUpdateRequest.getNickname().isBlank()) {
             this.nickname = userUpdateRequest.getNickname();
         }
-        // TODO : 이미지 처리
     }
 
     public void deleteUser() {
