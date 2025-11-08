@@ -8,5 +8,4 @@ import org.springframework.web.multipart.MultipartFile;
 @Getter
 public class UserUpdateRequest {
     private String nickname;
-    private MultipartFile profileImage;
 }

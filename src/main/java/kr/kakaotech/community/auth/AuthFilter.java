@@ -6,11 +6,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -18,12 +20,11 @@ import java.util.Optional;
 @Component
 public class AuthFilter extends OncePerRequestFilter {
 
-    private final AuthenticationStrategy authStrategy;
-
     // 필터 제외 경로 목록
-    private static final String[] EXCLUDED_PATHS = {
-            "/auth", "/error", "/posts",
-    };
+    @Value("${exclusive-path}")
+    private List<String> EXCLUDED_PATHS;
+
+    private final AuthenticationStrategy authStrategy;
 
     // 필터 제외 경로 설정
     @Override
@@ -38,7 +39,7 @@ public class AuthFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        return Arrays.stream(EXCLUDED_PATHS).anyMatch(path::equals);
+        return EXCLUDED_PATHS.stream().anyMatch(path::startsWith);
     }
 
     @Override

@@ -6,7 +6,6 @@ import kr.kakaotech.community.dto.request.UserPasswordRequest;
 import kr.kakaotech.community.dto.request.UserRegisterRequest;
 import kr.kakaotech.community.dto.request.UserUpdateRequest;
 import kr.kakaotech.community.dto.response.UserDetailResponse;
-import kr.kakaotech.community.global.security.CustomUserDetails;
 import kr.kakaotech.community.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -64,8 +63,9 @@ public class UserController {
     @PatchMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<UserDetailResponse>> updateUser(@PathVariable String userId,
                                                                       @ModelAttribute UserUpdateRequest userUpdateRequest,
+                                                                      @RequestPart(value = "profileImage", required = false) MultipartFile image,
                                                                       HttpServletRequest request) {
-        UserDetailResponse userDetailResponse = userService.updateUser(userId, userUpdateRequest);
+        UserDetailResponse userDetailResponse = userService.updateUser(userId, userUpdateRequest, image);
 
         ApiResponse<UserDetailResponse> apiResponse = new ApiResponse<>("업데이트 성공", userDetailResponse);
         return ResponseEntity.ok(apiResponse);

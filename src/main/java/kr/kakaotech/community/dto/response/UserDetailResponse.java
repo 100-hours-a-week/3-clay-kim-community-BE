@@ -13,4 +13,5 @@ public class UserDetailResponse {
     String nickname;
     Boolean deleted;
     String role;
+    String imageUrl;
 }

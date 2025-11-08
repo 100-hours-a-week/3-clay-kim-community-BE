@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Random;
 import java.util.UUID;
 
 @Slf4j
@@ -59,6 +60,8 @@ public class UserService {
         if (image != null && !image.isEmpty()) {
             Image imageEntity = imageService.saveImage(image);
             user.addImage(imageEntity);
+        } else {
+            user.addImage(imageService.getDefaultImage());
         }
 
         userRepository.save(user);
@@ -79,7 +82,8 @@ public class UserService {
                 getUser.getEmail(),
                 getUser.getNickname(),
                 getUser.getDeleted(),
-                getUser.getRole().toString()
+                getUser.getRole().toString(),
+                getUser.getImage().getUrl()
         );
     }
 
@@ -97,7 +101,8 @@ public class UserService {
                 getUser.getId().toString(),
                 getUser.getEmail(), getUser.getNickname(),
                 getUser.getDeleted(),
-                getUser.getRole().toString()
+                getUser.getRole().toString(),
+                getUser.getImage().getUrl()
         ));
     }
 
@@ -106,18 +111,24 @@ public class UserService {
      * User의 updateUser()를 통해 변경사항만 업데이트합니다.
      */
     @Transactional
-    public UserDetailResponse updateUser(String userId, UserUpdateRequest userUpdateRequest) {
+    public UserDetailResponse updateUser(String userId, UserUpdateRequest userUpdateRequest, MultipartFile image) {
         User getUser = userRepository.findById(UUID.fromString(userId)).orElseThrow(() ->
                 new CustomException(ErrorCode.NOT_FOUND_USER));
 
         getUser.updateUser(userUpdateRequest);
+
+        if (image != null && !image.isEmpty()) {
+            Image imageEntity = imageService.saveImage(image);
+            getUser.addImage(imageEntity);
+        }
 
         return new UserDetailResponse(
                 getUser.getId().toString(),
                 getUser.getEmail(),
                 getUser.getNickname(),
                 getUser.getDeleted(),
-                getUser.getRole().toString()
+                getUser.getRole().toString(),
+                getUser.getImage().getUrl()
         );
     }
 
