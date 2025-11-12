@@ -61,7 +61,7 @@ public class UserService {
             Image imageEntity = imageService.saveImage(image);
             user.addImage(imageEntity);
         } else {
-            user.addImage(imageService.getDefaultImage());
+//            user.addImage(imageService.getDefaultImage());
         }
 
         userRepository.save(user);
