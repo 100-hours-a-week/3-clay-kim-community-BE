@@ -1,7 +1,6 @@
 package kr.kakaotech.community.entity;
 
 import jakarta.persistence.*;
-import kr.kakaotech.community.dto.request.UserRegisterRequest;
 import kr.kakaotech.community.dto.request.UserUpdateRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,9 +27,9 @@ public class User {
     private String password;
     @Column(nullable = false, unique = true, length = 12)
     private String nickname;
+
     @Column(nullable = false)
     @ColumnDefault("false")
-    @Builder.Default
     private Boolean deleted = false;
 
     @Column(nullable = false)

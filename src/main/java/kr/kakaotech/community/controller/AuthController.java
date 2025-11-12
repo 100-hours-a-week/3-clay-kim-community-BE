@@ -47,6 +47,7 @@ public class AuthController {
     @GetMapping("/auth/refresh")
     public ResponseEntity<ApiResponse<Object>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         authService.refreshToken(request, response);
+        ApiResponse.success("success", true);
         return null;
     }
 }

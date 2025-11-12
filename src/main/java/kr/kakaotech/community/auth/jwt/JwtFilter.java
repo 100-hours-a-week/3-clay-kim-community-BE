@@ -24,6 +24,7 @@ public class JwtFilter implements AuthenticationStrategy {
 
     private final JwtProvider jwtProvider;
     private final String ACCESS_TOKEN = "accessToken";
+    private final String REFRESH_TOKEN = "refreshToken";
 
     /**
      * JWT 추출 및 검증
@@ -68,11 +69,15 @@ public class JwtFilter implements AuthenticationStrategy {
             log.error("JWT 서명 에러");
             throw new CustomException(ErrorCode.NON_SIGNATURE_JWT);
         } catch (ExpiredJwtException e) {
-            log.error("JWT 기간 만료");
+            log.info("JWT 기간 만료");
             throw new CustomException(ErrorCode.EXPIRED_JWT);
         } catch (Exception e) {
             log.error("[JwtFilter 에러] : {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.SERVER_ERROR);
         }
+    }
+
+    public boolean hasRefreshToken(HttpServletRequest request) {
+        return extractTokenFromCookie(request, REFRESH_TOKEN).isPresent();
     }
 }

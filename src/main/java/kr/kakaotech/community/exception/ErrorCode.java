@@ -1,6 +1,5 @@
 package kr.kakaotech.community.exception;
 
-import kr.kakaotech.community.entity.Post;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
@@ -39,8 +38,9 @@ public enum ErrorCode {
      * JWT
      */
     EXPIRED_JWT("JWT 기간 만료되었습니다.", HttpStatus.UNAUTHORIZED),
+    EXPIRED_ACCESS_TOKEN("expiredAccessToken", HttpStatus.UNAUTHORIZED),
     NON_SIGNATURE_JWT("올바르지않은 서명입니다.", HttpStatus.UNAUTHORIZED),
-    INVALID_TOKEN("토큰이 존재하지 않습니다.", HttpStatus.UNAUTHORIZED),
+    INVALID_TOKEN("invalidToken", HttpStatus.UNAUTHORIZED),
 
     /**
      * Session
