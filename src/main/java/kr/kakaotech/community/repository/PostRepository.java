@@ -1,6 +1,7 @@
 package kr.kakaotech.community.repository;
 
 import kr.kakaotech.community.dto.response.PostListDto;
+import kr.kakaotech.community.dto.response.PostSummaryResponse;
 import kr.kakaotech.community.dto.response.PostWithStatusDto;
 import kr.kakaotech.community.entity.Post;
 import org.springframework.data.domain.Pageable;
@@ -15,74 +16,70 @@ import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query("""
-        SELECT p, ps
-        FROM posts p
-        JOIN FETCH post_statuses ps ON ps.post = p
-        WHERE p.deleted = false
-        ORDER BY p.id DESC
-    """)
-    List<Object[]> findTopPost(Pageable pageable);
+                SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
+                            p.id, p.title, p.nickname, p.createdAt,
+                            ps.likeCount, ps.commentCount, ps.viewCount
+                )
+                FROM posts p
+                JOIN post_statuses ps ON ps.postId = p.id
+                WHERE p.deleted = false
+                ORDER BY p.id DESC
+            """)
+    List<PostSummaryResponse> findTopPost(Pageable pageable);
 
     @Query("""
-        SELECT p, ps
-        FROM posts p
-        JOIN FETCH post_statuses ps ON ps.post = p
-        WHERE p.id < :cursor AND p.deleted = false
-        ORDER BY p.id DESC
-    """)
-    List<Object[]> findPostByCursor(@Param("cursor") int cursor, Pageable pageable);
+                SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
+                            p.id, p.title, p.nickname, p.createdAt,
+                            ps.likeCount, ps.commentCount, ps.viewCount
+                )
+                FROM posts p
+                JOIN FETCH post_statuses ps ON ps.post = p
+                WHERE p.id < :cursor AND p.deleted = false
+                ORDER BY p.id DESC
+            """)
+    List<PostSummaryResponse> findPostByCursor(@Param("cursor") int cursor, Pageable pageable);
 
     @Query("""
-        SELECT p, ps
-        from posts p
-        join fetch post_statuses ps on ps.post = p
-        where p.deleted = false
-        and p.createdAt >= :startDate
-        order by ps.likeCount asc
-    """)
-    List<Object[]> findPostByLikeCount(@Param("startDate") LocalDateTime startDate,
+                SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
+                            p.id, p.title, p.nickname, p.createdAt,
+                            ps.likeCount, ps.commentCount, ps.viewCount
+                )
+                from posts p
+                join fetch post_statuses ps on ps.post = p
+                where p.deleted = false
+                and p.createdAt >= :startDate
+                order by ps.likeCount asc
+            """)
+    List<PostSummaryResponse> findPostByLikeCount(@Param("startDate") LocalDateTime startDate,
                                        Pageable pageable);
 
     @Query("""
-        SELECT p, ps
-        from posts p
-        join fetch post_statuses ps on ps.post = p
-        where p.deleted = false
-        order by ps.likeCount asc
-    """)
-    List<Object[]> findTop10Post(
-                                 Pageable pageable);
+                SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
+                            p.id, p.title, p.nickname, p.createdAt,
+                            ps.likeCount, ps.commentCount, ps.viewCount
+                )
+                from posts p
+                join fetch post_statuses ps on ps.post = p
+                where p.deleted = false
+                order by ps.likeCount asc
+            """)
+    List<PostSummaryResponse> findTop10Post(
+            Pageable pageable);
 
     // ========== 추가된 최적화된 조회 메서드들 ==========
-
-    /**
-     * 방법 1: DTO 프로젝션 - 게시글 목록 조회 (content 제외)
-     * 장점: 필요한 컬럼만 SELECT, 한 번의 쿼리로 조회
-     */
-    @Query("""
-        SELECT new kr.kakaotech.community.dto.response.PostListDto(
-            p.id, p.title, p.nickname, p.createdAt,
-            ps.viewCount, ps.likeCount, ps.commentCount
-        )
-        FROM posts p
-        JOIN post_statuses ps ON p.id = ps.postId
-        WHERE p.deleted = false
-        ORDER BY p.id DESC
-    """)
-    List<PostListDto> findAllPostListWithStatus(Pageable pageable);
 
     /**
      * 방법 1-2: DTO 프로젝션 - 게시글 상세 조회 (content 포함)
      */
     @Query("""
-        SELECT new kr.kakaotech.community.dto.response.PostWithStatusDto(
-            p.id, p.title, p.content, p.nickname, p.createdAt, p.deleted,
-            ps.viewCount, ps.likeCount, ps.commentCount
-        )
-        FROM posts p
-        JOIN post_statuses ps ON p.id = ps.postId
-        WHERE p.id = :postId AND p.deleted = false
-    """)
+                SELECT new kr.kakaotech.community.dto.response.PostWithStatusDto(
+                    p.id, p.title, p.content, p.nickname, p.createdAt, p.deleted,
+                    ps.viewCount, ps.likeCount, ps.commentCount
+                )
+                FROM posts p
+                JOIN post_statuses ps ON p.id = ps.postId
+                WHERE p.id = :postId AND p.deleted = false
+            """)
     Optional<PostWithStatusDto> findPostWithStatusById(@Param("postId") Integer postId);
 
     /**
@@ -104,30 +101,30 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
      * 방법 4: 커서 기반 페이징 + DTO 프로젝션
      */
     @Query("""
-        SELECT new kr.kakaotech.community.dto.response.PostListDto(
-            p.id, p.title, p.nickname, p.createdAt,
-            ps.viewCount, ps.likeCount, ps.commentCount
-        )
-        FROM posts p
-        JOIN post_statuses ps ON p.id = ps.postId
-        WHERE p.id < :cursor AND p.deleted = false
-        ORDER BY p.id DESC
-    """)
+                SELECT new kr.kakaotech.community.dto.response.PostListDto(
+                    p.id, p.title, p.nickname, p.createdAt,
+                    ps.viewCount, ps.likeCount, ps.commentCount
+                )
+                FROM posts p
+                JOIN post_statuses ps ON p.id = ps.postId
+                WHERE p.id < :cursor AND p.deleted = false
+                ORDER BY p.id DESC
+            """)
     List<PostListDto> findPostListByCursorWithStatus(@Param("cursor") Integer cursor, Pageable pageable);
 
     /**
      * 방법 5: 좋아요 순 정렬 + DTO 프로젝션
      */
     @Query("""
-        SELECT new kr.kakaotech.community.dto.response.PostListDto(
-            p.id, p.title, p.nickname, p.createdAt,
-            ps.viewCount, ps.likeCount, ps.commentCount
-        )
-        FROM posts p
-        JOIN post_statuses ps ON p.id = ps.postId
-        WHERE p.deleted = false AND p.createdAt >= :startDate
-        ORDER BY ps.likeCount DESC
-    """)
+                SELECT new kr.kakaotech.community.dto.response.PostListDto(
+                    p.id, p.title, p.nickname, p.createdAt,
+                    ps.viewCount, ps.likeCount, ps.commentCount
+                )
+                FROM posts p
+                JOIN post_statuses ps ON p.id = ps.postId
+                WHERE p.deleted = false AND p.createdAt >= :startDate
+                ORDER BY ps.likeCount DESC
+            """)
     List<PostListDto> findPostListByLikeCountWithStatus(@Param("startDate") LocalDateTime startDate, Pageable pageable);
 
 }

@@ -76,15 +76,15 @@ public class PostService {
     @Transactional
     public PostListResponse getPostList(Integer cursor, int size) {
         Pageable pageable = PageRequest.of(0, size);
-        List<Object[]> resultList;
+        List<PostSummaryResponse> postList;
 
         if (cursor == null) {
-            resultList = postRepository.findTopPost(pageable);
+            postList = postRepository.findTopPost(pageable);
         } else {
-            resultList = postRepository.findPostByCursor(cursor, pageable);
+            postList = postRepository.findPostByCursor(cursor, pageable);
         }
 
-        return getPostListAndNextCursorResponse(size, resultList);
+        return getPostListAndNextCursorResponse(size, postList);
     }
 
     /**
@@ -97,21 +97,21 @@ public class PostService {
             default -> throw new CustomException(ErrorCode.BAD_REQUEST_FILTER);
         };
 
-        List<Object[]> resultList = postRepository.findPostByLikeCount(
+        List<PostSummaryResponse> postList = postRepository.findPostByLikeCount(
                 startDate,
                 PageRequest.of(cursor == null ? 0 : cursor, size)
         );
 
-        return getPostListAndNextCursorResponse(size, resultList);
+        return getPostListAndNextCursorResponse(size, postList);
     }
 
     /**
      * TOP 10 좋아요 순서 정렬
      */
     public PostListResponse getPostTop10List() {
-        List<Object[]> resultList = postRepository.findTop10Post(PageRequest.of(0, 10));
+        List<PostSummaryResponse> postList = postRepository.findTop10Post(PageRequest.of(0, 10));
 
-        return getPostListAndNextCursorResponse(11, resultList);
+        return getPostListAndNextCursorResponse(11, postList);
     }
 
     /**
@@ -154,14 +154,12 @@ public class PostService {
 
     /**
      * JPA 결과를 Response로 변환해 줍니다.
-     *
+     * <p>
      * JPA 결과 - Post, PostStatus
      * List 사이즈를 확인 후 nextCursor와 hasNext 반환
      */
-    private PostListResponse getPostListAndNextCursorResponse(int size, List<Object[]> resultList) {
-        List<PostSummaryResponse> postList = PostSummaryResponse.fromJoinedList(resultList);
-
-        boolean hasNext = resultList.size() == size;
+    private PostListResponse getPostListAndNextCursorResponse(int size, List<PostSummaryResponse> postList) {
+        boolean hasNext = postList.size() == size;
         Integer nextCursor = hasNext ? postList.get(postList.size() - 1).getId() : null;
 
         return new PostListResponse(postList, nextCursor, hasNext);
