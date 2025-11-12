@@ -1,9 +1,7 @@
 package kr.kakaotech.community.service;
 
 import kr.kakaotech.community.dto.request.PostRegisterRequest;
-import kr.kakaotech.community.dto.response.PostDetailResponse;
-import kr.kakaotech.community.dto.response.PostListResponse;
-import kr.kakaotech.community.dto.response.PostSummaryResponse;
+import kr.kakaotech.community.dto.response.*;
 import kr.kakaotech.community.entity.*;
 import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
@@ -11,6 +9,7 @@ import kr.kakaotech.community.repository.PostRepository;
 import kr.kakaotech.community.repository.PostStatusRepository;
 import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class PostService {
@@ -48,7 +48,7 @@ public class PostService {
         }
 
         Post savedPost = postRepository.saveAndFlush(post);
-        System.out.println("=== postId: " + savedPost.getId());
+        log.info("=== postId: " + savedPost.getId());
         PostStatus status = new PostStatus(savedPost);
         postStatusRepository.save(status);
 
@@ -97,12 +97,10 @@ public class PostService {
             default -> throw new CustomException(ErrorCode.BAD_REQUEST_FILTER);
         };
 
-        List<Object[]> resultList;
-        if (cursor == null) {
-            resultList = postRepository.findPostByLikeCount(startDate, PageRequest.of(0, size));
-        } else {
-            resultList = postRepository.findPostByLikeCount(startDate, PageRequest.of(cursor, size));
-        }
+        List<Object[]> resultList = postRepository.findPostByLikeCount(
+                startDate,
+                PageRequest.of(cursor == null ? 0 : cursor, size)
+        );
 
         return getPostListAndNextCursorResponse(size, resultList);
     }
@@ -119,6 +117,7 @@ public class PostService {
     /**
      * 게시글 상세조회
      */
+    @Transactional
     public PostDetailResponse getPostDetails(int postId) {
         Post post = postRepository.findById(postId).orElseThrow(() ->
                 new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -126,6 +125,8 @@ public class PostService {
         if (post.getDeleted()) {
             throw new CustomException(ErrorCode.NOT_FOUND_POST);
         }
+
+        postStatusRepository.incrementViewCount(postId);
 
         return new PostDetailResponse(
                 post.getTitle(),

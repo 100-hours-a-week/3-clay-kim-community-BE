@@ -42,4 +42,8 @@ public class PostStatus {
         this.likeCount = like;
         this.commentCount = count;
     }
+
+    public void incrementViewCount() {
+        this.viewCount ++;
+    }
 }

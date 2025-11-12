@@ -107,7 +107,7 @@ public class PostStatusService {
         return new PostStatusResponse(viewCount, likeCount, commentCount);
     }
 
-    @Scheduled(fixedDelay = 6000000) // 1분마다
+//    @Scheduled(fixedDelay = 6000000) // 1분마다
     public void syncToDatabase() {
         log.info("스케쥴러 시작");
         transactionalSync();
@@ -157,6 +157,16 @@ public class PostStatusService {
     private int parseInteger(String value) {
         if (value == null || value.isEmpty()) return 0;
         return Integer.parseInt(value);
+    }
+
+    // TODO: 조회수 해결해보기.
+    @Transactional
+    public void incrementViewCountRDB(int postId) {
+//        PostStatus postStatus = postStatusRepository.findById(postId).orElseThrow(() ->
+//                new CustomException(ErrorCode.NOT_FOUND_POST));
+
+//        postStatus.incrementViewCount();
+        postStatusRepository.incrementViewCount(postId);
     }
 }
 

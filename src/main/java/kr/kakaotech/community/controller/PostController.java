@@ -33,9 +33,7 @@ public class PostController {
      * 게시글 목록 불러오기
      */
     @GetMapping("/posts")
-    public ResponseEntity<ApiResponse<PostListResponse>> getPostList(@RequestParam(required = false) Integer cursor,
-                                                                     @RequestParam(defaultValue = "5") int size,
-                                                                     @RequestParam(required = false) String period) {
+    public ResponseEntity<ApiResponse<PostListResponse>> getPostList(@RequestParam(required = false) Integer cursor, @RequestParam(defaultValue = "5") int size, @RequestParam(required = false) String period) {
         PostListResponse response;
         if (period == null) {
             response = postService.getPostList(cursor, size);
