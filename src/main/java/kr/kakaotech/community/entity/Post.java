@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-//@Table(name = "posts")
 @Entity(name = "posts")
 public class Post {
     @Id

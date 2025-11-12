@@ -72,7 +72,7 @@ public class PostStatusService {
      * postStatus 읽기
      */
     @Transactional
-    public PostStatusResponse getPostStatus(int postId) {
+    public PostStatusResponse getPostStatusRedis(int postId) {
         String viewKey = VIEW_KEY_PREFIX + postId;
         String likeKey = LIKE_KEY_PREFIX + postId;
         String commentKey = COMMENT_KEY_PREFIX + postId;
@@ -93,9 +93,7 @@ public class PostStatusService {
             redisTemplate.opsForValue().set(commentKey, String.valueOf(postStatus.getCommentCount()));
 
             return new PostStatusResponse(
-                    postStatus.getViewCount(),
-                    postStatus.getLikeCount(),
-                    postStatus.getCommentCount()
+                    postStatus.getViewCount()
             );
         }
 
@@ -104,10 +102,10 @@ public class PostStatusService {
         int likeCount = parseInteger(redisTemplate.opsForValue().get(likeKey));
         int commentCount = parseInteger(redisTemplate.opsForValue().get(commentKey));
 
-        return new PostStatusResponse(viewCount, likeCount, commentCount);
+        return new PostStatusResponse(viewCount);
     }
 
-    @Scheduled(fixedDelay = 6000000) // 1분마다
+//    @Scheduled(fixedDelay = 6000000) // 1분마다
     public void syncToDatabase() {
         log.info("스케쥴러 시작");
         transactionalSync();
@@ -157,6 +155,21 @@ public class PostStatusService {
     private int parseInteger(String value) {
         if (value == null || value.isEmpty()) return 0;
         return Integer.parseInt(value);
+    }
+
+    // TODO: 조회수 해결해보기.
+    @Transactional
+    public void incrementViewCountRDB(int postId) {
+        postStatusRepository.incrementViewCount(postId);
+    }
+
+    /**
+     * 조회수 불러오기
+     *
+     * 다른 통계정보는 각자 들고오기 때문에 임시 삭제
+     */
+    public PostStatusResponse getPostStatus(int postId) {
+        return new PostStatusResponse(postStatusRepository.findById(postId).map(PostStatus::getViewCount).orElse(0));
     }
 }
 

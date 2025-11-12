@@ -34,16 +34,23 @@ public class PostController {
      */
     @GetMapping("/posts")
     public ResponseEntity<ApiResponse<PostListResponse>> getPostList(@RequestParam(required = false) Integer cursor,
+                                                                     @RequestParam(required = false) String nickname,
                                                                      @RequestParam(defaultValue = "5") int size,
                                                                      @RequestParam(required = false) String period) {
-        PostListResponse response;
-        if (period == null) {
+        String wanted = "";
+        PostListResponse response = null;
+        if (period == null && nickname == null) {
             response = postService.getPostList(cursor, size);
-        } else {
+        } else if (nickname == null) {
+            wanted = "Like - ";
             response = postService.getLikePostList(cursor, period, size);
         }
+        if (nickname != null) {
+            wanted = "nickname - ";
+            response = postService.getNicknamePostList(cursor, nickname, size);
+        }
 
-        return ApiResponse.success("게시글 목록 조회 성공", response);
+        return ApiResponse.success(wanted + "게시글 목록 조회 성공", response);
     }
 
     @GetMapping("/posts/top10")
@@ -57,8 +64,8 @@ public class PostController {
     @GetMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponse>> getPost(@PathVariable int postId) {
         PostDetailResponse response = postService.getPostDetails(postId);
-
-        postStatusService.incrementViewCount(postId);
+        // 조회수 증가
+        postStatusService.incrementViewCountRDB(postId);
 
         return ApiResponse.success("게시글 상세 내용입니다.", response);
     }
