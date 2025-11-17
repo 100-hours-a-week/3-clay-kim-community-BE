@@ -1,11 +1,15 @@
+server:
+  servlet:
+    context-path: /api
+
 spring:
   application:
     name: community
 
   datasource:
-    url: jdbc:mysql://localhost:3306/community?serverTimezone=UTC&useSSL=false
-    username: clay
-    password:
+    url: jdbc:mysql://community-rds.c54g8qaouy1y.ap-northeast-2.rds.amazonaws.com:3306/community?serverTimezone=UTC&useSSL=false
+    username: admin
+    password: claycommu123!
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -51,12 +55,14 @@ upload-dir:
   image: uploads/images
 
 cors:
-  allowed-origins:
-    - http://43.200.226.212:3000/
+  allowedOrigins:
+    - https://seonjun.store
+    - http://seonjun.store
   exposedHeaders:
     - Authorization
     - Content-Type
     - access
     - refresh
 
-exclusive-path: /auth, /error, /images, /posts/top10
+exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10
+
