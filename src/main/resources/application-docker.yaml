@@ -1,0 +1,67 @@
+server:
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: community
+
+  datasource:
+    url: jdbc:mysql://community-mysql:3306/community?serverTimezone=UTC&useSSL=false
+    username: root
+    password: ${DB_PASSWORD:root123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: ture
+    show-sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+
+  thymeleaf:
+    cache: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB       # 파일 하나의 최대 크기
+      max-request-size: 30MB    # 요청 전체 크기 (파일 여러 개 업로드 시 합산)
+
+auth:
+  type: jwt
+
+jwt:
+  expirationtime:
+    accessTtl: 1800 # 30분
+    refreshTtl: 604800 # 7일
+  secret: ${JWT_SECRET:defaultfordevalsjfielsjfinaajfowinblxiejfwoihbya}
+
+session:
+  sessionTtl: 1800
+
+#logging:
+#  level:
+#    org.hibernate.SQL: debug
+
+upload-dir:
+  image: uploads/images
+
+cors:
+  allowedOrigins:
+    - http://52.79.237.218:3000/
+  exposedHeaders:
+    - Authorization
+    - Content-Type
+    - access
+    - refresh
+
+exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10
+
