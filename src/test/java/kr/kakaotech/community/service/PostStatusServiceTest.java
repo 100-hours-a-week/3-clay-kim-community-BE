@@ -95,7 +95,7 @@ class PostStatusServiceTest {
                 .orElseThrow(() -> new RuntimeException("테스트용 Post ID " + testPostId + "가 DB에 존재하지 않습니다."));
 
         int initialViewCount = beforeStatus.getViewCount();
-        int threadCount = 500;
+        int threadCount = 1000;
 
         ExecutorService executorService = Executors.newFixedThreadPool(32);
         CountDownLatch latch = new CountDownLatch(threadCount);
