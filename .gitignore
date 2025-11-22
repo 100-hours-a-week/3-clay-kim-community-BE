@@ -35,7 +35,11 @@ target/
 *.rar
 
 # secret
-/src/main/resources/application-secret.yml
+/src/main/resources/application-local.yaml
+/src/main/resources/application-prod.yaml
+/src/main/resources/application-docker.yaml
+
+
 
 # image
 /uploads/*
