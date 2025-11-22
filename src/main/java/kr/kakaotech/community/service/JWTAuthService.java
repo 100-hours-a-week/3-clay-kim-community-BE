@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.kakaotech.community.dto.request.UserLoginRequest;
 import kr.kakaotech.community.dto.response.UserLoginResponse;
+import kr.kakaotech.community.entity.RefreshToken;
+import kr.kakaotech.community.entity.RefreshTokenRepository;
 import kr.kakaotech.community.entity.User;
 import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
@@ -14,7 +16,6 @@ import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "auth.type", havingValue = "jwt")
@@ -32,7 +32,7 @@ public class JWTAuthService implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Value("${jwt.expirationtime.accessTtl}")
     private int accessTtl;
@@ -41,7 +41,6 @@ public class JWTAuthService implements AuthService {
 
     private final String ACCESS_TOKEN = "accessToken";
     private final String REFRESH_TOKEN = "refreshToken";
-    private final String REFRESH_TOKEN_PREFIX = "refresh_token:";
 
     @Transactional
     @Override
@@ -57,7 +56,7 @@ public class JWTAuthService implements AuthService {
         }
 
         // 기존 리프레시 토큰 무효화
-        redisTemplate.delete(REFRESH_TOKEN_PREFIX + user.getId().toString());
+        refreshTokenRepository.deleteByUserId(user.getId());
 
         // 토큰 발급 및 저장
         TokenResponse tokenResponse = generateAndSaveToken(user);
@@ -70,7 +69,7 @@ public class JWTAuthService implements AuthService {
      * 로그아웃
      *
      * 쿠키 maxAge 0으로 설정
-     * redis 삭제
+     * DB에서 삭제
      */
     @Override
     public void deleteAuth(HttpServletRequest request, HttpServletResponse response) {
@@ -83,14 +82,14 @@ public class JWTAuthService implements AuthService {
         Claims refreshClaims = jwtProvider.parseToken(refreshToken);
         String userId = refreshClaims.getSubject();
 
-        redisTemplate.delete(REFRESH_TOKEN_PREFIX + userId);
+        refreshTokenRepository.deleteByUserId(UUID.fromString(userId));
     }
 
     /**
      * ACCESS_TOKEN 갱신
      *
      * refreshToken 만료확인
-     * redis에 있는지 확인
+     * DB에 있는지 확인
      * ACCESS_TOKEN & refreshToken 발급
      * Cookie 생성
      */
@@ -103,13 +102,13 @@ public class JWTAuthService implements AuthService {
         Claims refreshClaims = jwtProvider.parseToken(refreshToken);
         String userId = refreshClaims.getSubject();
 
-        // redis 검증
-        String refreshTokenFromRedis = getRefreshTokenFromRedis(userId);
-        if (refreshTokenFromRedis == null || !refreshTokenFromRedis.equals(refreshToken)) {
+        // DB 검증
+        String refreshTokenFromDB = getRefreshToken(userId);
+        if (refreshTokenFromDB == null || !refreshTokenFromDB.equals(refreshToken)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
 
-        // 쿠키 재발급(Access + Refresh, Refresh Redis 등록)
+        // 쿠키 재발급(Access + Refresh, Refresh DB 등록)
         User user = userRepository.findById(UUID.fromString(userId)).get();
         setCookie(response, generateAndSaveToken(user));
     }
@@ -123,8 +122,9 @@ public class JWTAuthService implements AuthService {
                         new CustomException(ErrorCode.INVALID_TOKEN));
     }
 
-    private String getRefreshTokenFromRedis(String userId) {
-        return (String) redisTemplate.opsForValue().get(REFRESH_TOKEN_PREFIX + userId);
+    private String getRefreshToken(String userId) {
+        Optional<RefreshToken> token = refreshTokenRepository.findByUserId(UUID.fromString(userId));
+        return token.map(RefreshToken::getToken).orElse(null);
     }
 
     private void setCookie(HttpServletResponse response, TokenResponse tokenResponse) {
@@ -140,8 +140,9 @@ public class JWTAuthService implements AuthService {
         String accessToken = jwtProvider.createAccess(user.getId().toString(), user.getRole().toString());
         String refreshToken = jwtProvider.createRefresh(user.getId().toString(), user.getRole().toString());
 
-        // Refresh 토큰만 Redis 저장
-        redisTemplate.opsForValue().set(REFRESH_TOKEN_PREFIX + user.getId().toString(), refreshToken, refreshTtl, TimeUnit.SECONDS);
+        // Refresh 토큰만 DB 저장
+        RefreshToken refreshTokenEntity = new RefreshToken(user.getId(), refreshToken, refreshTtl);
+        refreshTokenRepository.save(refreshTokenEntity);
 
         return new TokenResponse(accessToken, refreshToken);
     }
