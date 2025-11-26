@@ -1,0 +1,127 @@
+name: Java Blue/Green CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - feat/env
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Docker Hub Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and Push Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/community-back:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/community-back:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Check if Docker is installed
+        id: check-docker
+        run: |
+          DOCKER_EXISTS=$(ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'command -v docker > /dev/null && echo "true" || echo "false"')
+          echo "docker_exists=$DOCKER_EXISTS" >> $GITHUB_OUTPUT
+
+      - name: Install Docker on EC2
+        if: steps.check-docker.outputs.docker_exists == 'false'
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            sudo apt-get update
+            sudo apt-get install -y \
+              ca-certificates \
+              curl \
+              gnupg \
+              lsb-release
+            sudo mkdir -p /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+              | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            echo \
+              "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+              https://download.docker.com/linux/ubuntu \
+              $(lsb_release -cs) stable" \
+              | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+            sudo usermod -aG docker $USER
+          EOF
+
+      - name: Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'bash -s' <<EOF
+          set -e
+          cd /home/${{ secrets.SERVER_USER }}/back
+
+          if docker ps | grep community-back-blue; then
+            TARGET=green
+            STOP=blue
+          elif docker ps | grep community-back-green; then
+            TARGET=blue
+            STOP=green
+          else
+            TARGET=blue
+            STOP=none
+          fi
+
+          echo "Deploying to: \$TARGET"
+          docker compose pull community-back-\$TARGET
+          docker compose up -d community-back-\$TARGET
+
+          if [ "\$STOP" != "none" ]; then
+            echo "Running health check..."
+            sleep 5
+          
+            for i in {1..30}; do
+              if ! docker ps | grep -q community-back-\$TARGET; then
+                echo "Container stopped!"
+                docker logs community-back-\$TARGET --tail 50
+                docker compose restart community-back-\$STOP
+                exit 1
+              fi
+          
+              if docker exec nginx-proxy curl -sf http://community-back-\$TARGET:8080 > /dev/null 2>&1; then
+                echo "Health check passed"
+                break
+              elif [ \$i -eq 10 ]; then
+                echo "Health check failed. Rolling back..."
+                docker logs community-back-\$TARGET --tail 50
+                docker stop community-back-\$TARGET
+                docker compose restart community-back-\$STOP
+                exit 1
+              fi
+          
+              sleep 2
+            done
+          else
+            echo "First deploy — waiting 10 seconds"
+            sleep 10
+          fi
+          
+          echo "Switching Nginx to \$TARGET"
+          sed -i "s/community-back-[a-z]\\+:8080/community-back-\$TARGET:8080/g" nginx.conf
+          docker exec nginx-proxy nginx -s reload
+
+          if [ "$STOP" != "none" ]; then
+            echo "Stopping: community-back-\$STOP"
+            docker stop community-back-\$STOP || true
+          fi
+          
+          echo "Deployment completed!"
+          EOF
