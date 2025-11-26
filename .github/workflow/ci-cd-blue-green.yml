@@ -63,6 +63,24 @@ jobs:
             sudo usermod -aG docker $USER
           EOF
 
+      - name: Create .env file on EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          cd /home/${{ secrets.SERVER_USER }}/back
+
+          # .env 파일 생성 (기존 파일이 있으면 덮어쓰기)
+          cat > .env << 'ENVFILE'
+          DOCKER_DB_USERNAME=${{ secrets.DOCKER_DB_USERNAME }}
+          DOCKER_DB_PASSWORD=${{ secrets.DOCKER_DB_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          ENVFILE
+
+          # 파일 권한 설정
+          chmod 600 .env
+
+          echo ".env file created successfully"
+          EOF
+
       - name: Deploy to EC2
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'bash -s' <<EOF
