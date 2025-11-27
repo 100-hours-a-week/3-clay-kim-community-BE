@@ -52,7 +52,6 @@
 //        postService.registerPost(user.getId().toString(), request);
 //
 //        // then
-////        assertThat(postRepository.count()).isEqualTo(1);
 //        assertThat(postImageRepository.count()).isEqualTo(2);
 //        assertThat(imageRepository.count()).isEqualTo(3);
 //
