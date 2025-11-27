@@ -44,6 +44,9 @@ dependencies {
 
     // security
     implementation 'org.springframework.security:spring-security-crypto:6.3.3'
+
+    // 테스트용 H2 DB
+    testImplementation 'com.h2database:h2'
 }
 
 tasks.named('test') {

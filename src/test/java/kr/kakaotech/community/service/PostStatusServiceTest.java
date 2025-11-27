@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.nio.ByteBuffer;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,11 +48,30 @@ class PostStatusServiceTest {
         cleanupTestData();
     }
 
+    private byte[] convertUuidToBytes(UUID uuid) {
+        ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+        bb.putLong(uuid.getMostSignificantBits());
+        bb.putLong(uuid.getLeastSignificantBits());
+        return bb.array();
+    }
+
     private void createTestData() {
-        // User 생성
+        // UUID를 Java에서 생성
+        UUID uuid = UUID.randomUUID();
+
+        // MySQL BINARY(16) 형식으로 변환
+        byte[] uuidBytes = convertUuidToBytes(uuid);
+
+        // User 생성 - ? 플레이스홀더 사용
         jdbcTemplate.update(
                 "INSERT INTO users (id, email, nickname, password, role, created_at, deleted) " +
-                        "VALUES (UNHEX(REPLACE(UUID(), '-', '')), 'concurrency_test@test.com', 'conctest', 'password', 'USER', NOW(), false)"
+                "VALUES (?, ?, ?, ?, ?, NOW(), ?)",
+                uuidBytes,  // 변수를 파라미터로 전달
+                "concurrency_test@test.com",
+                "conctest",
+                "password",
+                "USER",
+                false
         );
 
         // Post 생성
