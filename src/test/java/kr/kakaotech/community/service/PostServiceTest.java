@@ -40,7 +40,6 @@
 //        );
 //    }
 //
-//
 //    @DisplayName("게시글 목록 조회 - 첫 조회, 다음 게시물 있음")
 //    @Test
 //    void getPostList_firstSearch_hasNextCursor() {

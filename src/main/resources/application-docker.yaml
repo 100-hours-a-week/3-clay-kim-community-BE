@@ -1,14 +1,15 @@
+server:
+  servlet:
+    context-path: /api
+
 spring:
   application:
     name: community
 
-  profiles:
-    active: local
-
   datasource:
-    url: jdbc:mysql://localhost:3306/community?serverTimezone=UTC&useSSL=false
-    username: root
-    password:
+    url: jdbc:mysql://mysql:3306/community?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DOCKER_DB_USERNAME}
+    password: ${DOCKER_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -17,14 +18,14 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        use_sql_comments: ture
+        use_sql_comments: true
     show-sql: true
 
   data:
     redis:
       host: localhost
       port: 6379
-      password: ${REDIS_SECRET:}
+      password:
 
   thymeleaf:
     cache: true
@@ -41,19 +42,20 @@ jwt:
   expirationtime:
     accessTtl: 1800 # 30분
     refreshTtl: 604800 # 7일
-  secret: ${JWT_SECRET:defaultjwtsecret}
+  secret: ${JWT_SECRET}
 
 session:
   sessionTtl: 1800
+
+#logging:
+#  level:
+#    org.hibernate.SQL: debug
 
 upload-dir:
   image: uploads/images
 
 cors:
-  exposedHeaders:
-    - Authorization
-    - Content-Type
-    - access
-    - refresh
+  allowedOrigins:
+    - https://amumal.duckdns.org
 
-exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10, /api/health
+# docker run -d --name back --network myapp-network  -p 8080:8080 -e CORS_ALLOWED-ORIGINS="http://3.36.4.46:3000" -e SPRING_DATASOURCE_URL="jdbc:mysql://community-mysql:3306/community?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true"  seonjun1/community-back:0.2
