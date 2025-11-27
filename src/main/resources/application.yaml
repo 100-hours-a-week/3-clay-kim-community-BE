@@ -56,4 +56,4 @@ cors:
     - access
     - refresh
 
-exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10
+exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10, /api/health

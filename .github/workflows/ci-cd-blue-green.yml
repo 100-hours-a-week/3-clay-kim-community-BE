@@ -123,7 +123,7 @@ jobs:
                 exit 1
               fi
           
-              if docker exec nginx-proxy curl -sf http://community-back-\$TARGET:8080 > /dev/null 2>&1; then
+              if docker exec nginx-proxy curl -sf http://community-back-\$TARGET:8080/api/health > /dev/null 2>&1; then
                 echo "Health check passed"
                 break
               elif [ \$i -eq 10 ]; then
