@@ -142,7 +142,7 @@ jobs:
           fi
           
           echo "Switching Nginx to \$TARGET"
-          cd /home/${{ secrets.SERVER_USER }}/nginx/locations
+          cd /home/${{ secrets.SERVER_USER }}/nginx/conf.d/locations
           sed -i "s/community-back-[a-z]\\+:8080/community-back-\$TARGET:8080/g" backend.conf
           docker exec nginx-proxy nginx -s reload
 
