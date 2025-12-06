@@ -1,7 +1,10 @@
 package kr.kakaotech.community.service;
 
 import kr.kakaotech.community.dto.response.PostStatusResponse;
+import kr.kakaotech.community.dto.response.PostTypeCountResponse;
 import kr.kakaotech.community.entity.PostStatus;
+import kr.kakaotech.community.entity.PostType;
+import kr.kakaotech.community.repository.PostRepository;
 import kr.kakaotech.community.repository.PostStatusRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +17,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PostStatusService {
     private final PostStatusRepository postStatusRepository;
+    private final PostRepository postRepository;
 
     // TODO: 조회수 해결해보기.
     @Transactional
     public void incrementViewCountRDB(int postId) {
         postStatusRepository.incrementViewCount(postId);
+    }
+
+    public PostTypeCountResponse getPostTypeCount(String type) {
+        return new PostTypeCountResponse(postRepository.countPostByType(PostType.valueOf(type.toUpperCase())));
     }
 
     /**

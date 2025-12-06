@@ -3,6 +3,7 @@ package kr.kakaotech.community.repository;
 import kr.kakaotech.community.dto.response.PostDetailResponse;
 import kr.kakaotech.community.dto.response.PostSummaryResponse;
 import kr.kakaotech.community.entity.Post;
+import kr.kakaotech.community.entity.PostType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -90,4 +91,6 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
         AND p.id = :postId
     """)
     Optional<PostDetailResponse> findPostDetails(int postId);
+
+    int countPostByType(PostType type);
 }

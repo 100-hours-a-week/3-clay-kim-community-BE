@@ -1,5 +1,8 @@
 package kr.kakaotech.community.entity;
 
+import lombok.Getter;
+
+@Getter
 public enum PostType {
     IN_PROGRESS("진행중"),
     COMPLETED("완료");
@@ -10,7 +13,4 @@ public enum PostType {
         this.description = description;
     }
 
-    public String getDescription() {
-        return description;
-    }
 }
