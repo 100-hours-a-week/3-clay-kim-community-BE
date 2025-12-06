@@ -11,4 +11,5 @@ public class PostRegisterRequest {
     private String title;
     private String content;
     private List<String> urlList;
+    private String type;
 }

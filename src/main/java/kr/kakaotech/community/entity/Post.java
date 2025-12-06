@@ -27,6 +27,8 @@ public class Post {
     @Column(nullable = false)
     @ColumnDefault("false")
     private Boolean deleted;
+    @Enumerated(EnumType.STRING)
+    private PostType type;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -38,9 +40,10 @@ public class Post {
     public Post() {
     }
 
-    public Post(String title, String content, String nickname, LocalDateTime createdAt, Boolean deleted, User user) {
+    public Post(String title, String content, PostType postType, String nickname, LocalDateTime createdAt, Boolean deleted, User user) {
         this.title = title;
         this.content = content;
+        this.type = postType;
         this.nickname = nickname;
         this.createdAt = createdAt;
         this.deleted = deleted;
@@ -51,6 +54,7 @@ public class Post {
         return new Post(
                 request.getTitle(),
                 request.getContent(),
+                PostType.valueOf(request.getType().toUpperCase()),
                 user.getNickname(),
                 LocalDateTime.now(),
                 false,
@@ -69,6 +73,9 @@ public class Post {
         }
         if (!request.getContent().isBlank() && request.getContent() != null) {
             this.content = request.getContent();
+        }
+        if (!request.getType().isBlank() && request.getType() != null) {
+            this.type = PostType.valueOf(request.getType().toUpperCase());
         }
         //TODO : 이미지 교체 작업
     }

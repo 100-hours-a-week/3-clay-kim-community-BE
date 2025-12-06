@@ -14,6 +14,7 @@ import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.auth.jwt.JwtProvider;
 import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.NonUniqueResultException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -103,10 +104,14 @@ public class JWTAuthService implements AuthService {
         String userId = refreshClaims.getSubject();
 
         // DB 검증
-        String refreshTokenFromDB = getRefreshToken(userId);
+        RefreshToken token = getRefreshToken(userId);
+        String refreshTokenFromDB = token.getToken();
         if (refreshTokenFromDB == null || !refreshTokenFromDB.equals(refreshToken)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
+
+        // 해당 유저에 대한 모든 토큰 삭제
+        refreshTokenRepository.deleteByUserId(UUID.fromString(userId));
 
         // 쿠키 재발급(Access + Refresh, Refresh DB 등록)
         User user = userRepository.findById(UUID.fromString(userId)).get();
@@ -122,9 +127,15 @@ public class JWTAuthService implements AuthService {
                         new CustomException(ErrorCode.INVALID_TOKEN));
     }
 
-    private String getRefreshToken(String userId) {
-        Optional<RefreshToken> token = refreshTokenRepository.findByUserId(UUID.fromString(userId));
-        return token.map(RefreshToken::getToken).orElse(null);
+    private RefreshToken getRefreshToken(String userId) {
+        try {
+            Optional<RefreshToken> findToken = refreshTokenRepository.findByUserId(UUID.fromString(userId));
+            return findToken.orElseThrow(() -> new CustomException(ErrorCode.INVALID_TOKEN));
+        } catch (NonUniqueResultException e) {
+            // 중복 데이터 발견 시 모두 삭제하고 재인증 요구
+            refreshTokenRepository.deleteByUserId(UUID.fromString(userId));
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
     }
 
     private void setCookie(HttpServletResponse response, TokenResponse tokenResponse) {

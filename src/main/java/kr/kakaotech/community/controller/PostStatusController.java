@@ -3,7 +3,9 @@ package kr.kakaotech.community.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import kr.kakaotech.community.dto.ApiResponse;
 import kr.kakaotech.community.dto.response.LikeResponse;
+import kr.kakaotech.community.dto.response.PostTypeCountResponse;
 import kr.kakaotech.community.service.LikeService;
+import kr.kakaotech.community.service.PostStatusService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +23,7 @@ import java.util.UUID;
 @Controller
 public class PostStatusController {
     private final LikeService likeService;
+    private final PostStatusService postStatusService;
 
     @PostMapping("/posts/{postId}/likes")
     public ResponseEntity<ApiResponse<LikeResponse>> toggleLike(@PathVariable int postId, HttpServletRequest request) {
@@ -36,4 +40,8 @@ public class PostStatusController {
         return ApiResponse.success("좋아요 상태", likeResponse);
     }
 
+    @GetMapping("/posts/type")
+    public ResponseEntity<ApiResponse<PostTypeCountResponse>> getTypeStatus(@RequestParam String type) {
+        return ApiResponse.success("해당 타입의 게시글 수 입니다.", postStatusService.getPostTypeCount(type));
+    }
 }

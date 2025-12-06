@@ -1,5 +1,6 @@
 package kr.kakaotech.community.dto.response;
 
+import kr.kakaotech.community.entity.PostType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,4 +16,5 @@ public class PostDetailResponse {
     private UUID userId;
     private String nickname;
     private String profileImageUrl;
+    private PostType postType;
 }

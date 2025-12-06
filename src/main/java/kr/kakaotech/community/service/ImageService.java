@@ -1,5 +1,6 @@
 package kr.kakaotech.community.service;
 
+import kr.kakaotech.community.dto.response.ImageStatusResponse;
 import kr.kakaotech.community.entity.Image;
 import kr.kakaotech.community.entity.Post;
 import kr.kakaotech.community.exception.CustomException;
@@ -77,5 +78,9 @@ public class ImageService {
         int randomId = random.nextInt(8) + 1;
         String defaultImagePath = "/images/default/default-" + randomId + ".jpg";
         return new Image(defaultImagePath);
+    }
+
+    public ImageStatusResponse getImageCount() {
+        return new ImageStatusResponse(imageRepository.count());
     }
 }
