@@ -5,8 +5,6 @@ server:
 spring:
   application:
     name: community
-  profiles:
-    include: aws
 
   datasource:
     url:
