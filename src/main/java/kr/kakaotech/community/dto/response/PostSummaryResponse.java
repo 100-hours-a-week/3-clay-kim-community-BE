@@ -2,6 +2,7 @@ package kr.kakaotech.community.dto.response;
 
 import kr.kakaotech.community.entity.Post;
 import kr.kakaotech.community.entity.PostStatus;
+import kr.kakaotech.community.entity.PostType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -19,6 +20,7 @@ public class PostSummaryResponse {
     private int commentCount;
     private int viewCount;
     private String imageUrl;
+    private PostType postType;
 
     private static PostSummaryResponse fromEntity(Post post, PostStatus postStatus, String userImageUrl) {
         return new PostSummaryResponse(
@@ -29,7 +31,8 @@ public class PostSummaryResponse {
                 postStatus.getViewCount(),
                 postStatus.getLikeCount(),
                 postStatus.getCommentCount(),
-                userImageUrl
+                userImageUrl,
+                post.getType()
         );
     }
 

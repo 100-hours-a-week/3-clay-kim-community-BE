@@ -1,5 +1,6 @@
 package kr.kakaotech.community.service;
 
+import kr.kakaotech.community.dto.request.PostModifyRequest;
 import kr.kakaotech.community.dto.request.PostRegisterRequest;
 import kr.kakaotech.community.dto.response.*;
 import kr.kakaotech.community.entity.*;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,24 +29,28 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final PostStatusRepository postStatusRepository;
+    private final ImageService imageService;
+
+    private final int IMAGE_LIMIT_COUNT = 5;
+    private final PostStatusService postStatusService;
 
     /**
      * Post 등록
      */
     @Transactional
-    public int registerPost(String userId, PostRegisterRequest request) {
+    public int registerPost(String userId, PostRegisterRequest request, List<MultipartFile> images) {
+        if (images != null && images.size() > IMAGE_LIMIT_COUNT) {
+            throw new CustomException(ErrorCode.IMAGE_TOO_MANY);
+        }
+
         User getUser = userRepository.findById(UUID.fromString(userId)).orElseThrow(() ->
                 new CustomException(ErrorCode.NOT_FOUND_USER));
 
         Post post = Post.toEntity(request, getUser);
 
         // 이미지 저장
-        if (request.getUrlList() != null) {
-            for (String url : request.getUrlList()) {
-                Image image = new Image(url);
-                PostImage postImage = new PostImage(image);
-                post.saveImage(postImage);
-            }
+        if (images != null && !images.isEmpty()) {
+            post.saveImage(imageService.saveImage(images, post));
         }
 
         Post savedPost = postRepository.saveAndFlush(post);
@@ -59,15 +65,44 @@ public class PostService {
      * 게시글 내용 수정
      */
     @Transactional
-    public void updatePost(int postId, String userId, PostRegisterRequest request) {
+    public void updatePost(int postId, String userId, PostModifyRequest request, List<MultipartFile> images) {
         Post post = postRepository.findById(postId).orElseThrow(() ->
                 new CustomException(ErrorCode.NOT_FOUND_POST));
 
         if (!post.getUser().getId().toString().equals(userId)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
+        if (post.getPostImages() != null && images != null && post.getPostImages().size() + images.size() > IMAGE_LIMIT_COUNT) {
+            throw new CustomException(ErrorCode.IMAGE_TOO_MANY);
+        }
 
+        // 기본 정보 수정
         post.updatePost(request);
+
+        // 이미지 삭제: removeImageIds에 있는 이미지들을 PostImage 리스트에서 제거
+        if (request.getRemoveImageIds() != null && !request.getRemoveImageIds().isEmpty()) {
+            post.getPostImages().removeIf(postImage ->
+                    request.getRemoveImageIds().contains(postImage.getImage().getId())
+            );
+        }
+
+        // 새 이미지 추가
+        if (images != null && !images.isEmpty()) {
+            List<PostImage> newPostImages = imageService.saveImage(images, post);
+            post.getPostImages().addAll(newPostImages);
+        }
+    }
+
+    /**
+     * 인덱스용 이미지 포함 게시글 목록 조회
+     */
+    @Transactional
+    public List<PostSummaryWithImageResponse> getPostListWithImage(int size) {
+        Pageable pageable = PageRequest.of(0, size);
+
+        List<PostSummaryWithImageResponse> postWithImage = postRepository.findPostWithImage(pageable);
+
+        return postWithImage;
     }
 
     /**
@@ -131,11 +166,27 @@ public class PostService {
      */
     @Transactional
     public PostDetailResponse getPostDetails(int postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() ->
-                new CustomException(ErrorCode.NOT_FOUND_POST));
+        Post post = postRepository.findPostDetailsWithImages(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        return postRepository.findPostDetails(postId).orElseThrow(() ->
-                new CustomException(ErrorCode.NOT_FOUND_POST));
+        // Post의 PostImage들에서 ImageResponse로 변환 (imageId + url)
+        List<ImageResponse> images = post.getPostImages().stream()
+                .map(postImage -> new ImageResponse(
+                        postImage.getImage().getId(),
+                        postImage.getImage().getUrl()
+                ))
+                .toList();
+
+        return new PostDetailResponse(
+                post.getTitle(),
+                post.getContent(),
+                post.getCreatedAt(),
+                post.getUser().getId(),
+                post.getNickname(),
+                post.getUser().getImage().getUrl(),
+                post.getType(),
+                images
+        );
     }
 
     /**

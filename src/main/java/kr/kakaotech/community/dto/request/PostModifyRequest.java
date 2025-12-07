@@ -7,9 +7,9 @@ import java.util.List;
 
 @AllArgsConstructor
 @Getter
-public class PostRegisterRequest {
+public class PostModifyRequest {
     private String title;
     private String content;
-    private List<String> urlList;
     private String type;
+    private List<Integer> removeImageIds;
 }

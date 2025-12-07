@@ -4,6 +4,7 @@ spring:
 
   profiles:
     active: local
+    include: aws
 
   datasource:
     url: jdbc:mysql://localhost:3306/community?serverTimezone=UTC&useSSL=false
@@ -49,6 +50,11 @@ session:
 upload-dir:
   image: uploads/images
 
+image:
+  upload:
+    profile-url: http
+    post-url: http
+
 cors:
   exposedHeaders:
     - Authorization
@@ -56,4 +62,4 @@ cors:
     - access
     - refresh
 
-exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10, /api/health, /api/uploads
+exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10, /api/health, /api/uploads, /api/posts/type, /api/images/status

@@ -17,4 +17,29 @@ public interface PostStatusRepository extends JpaRepository<PostStatus, Integer>
         WHERE post_id = :id
     """, nativeQuery = true)
     void incrementViewCount(@Param("id") int id);
+
+    @Modifying
+    @Query(value = """
+        UPDATE post_statuses
+        SET like_count = like_count + 1
+        WHERE post_id = :id
+    """, nativeQuery = true)
+    void incrementLikeCount(@Param("id") int id);
+
+    @Modifying
+    @Query(value = """
+        UPDATE post_statuses
+        SET like_count = like_count - 1
+        WHERE post_id = :id
+    """, nativeQuery = true)
+    void decrementLikeCount(@Param("id") int id);
+
+    @Modifying
+    @Query(value = """
+        UPDATE post_statuses
+        SET comment_count = comment_count + 1
+        WHERE post_id = :id
+    """, nativeQuery = true)
+    void incrementCommentCount(@Param("id") int id);
+
 }
