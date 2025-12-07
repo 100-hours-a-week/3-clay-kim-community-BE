@@ -1,6 +1,7 @@
 package kr.kakaotech.community.entity;
 
 import jakarta.persistence.*;
+import kr.kakaotech.community.dto.request.PostModifyRequest;
 import kr.kakaotech.community.dto.request.PostRegisterRequest;
 import lombok.Getter;
 import org.hibernate.annotations.ColumnDefault;
@@ -16,7 +17,7 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 //    @Column(columnDefinition = "INT UNSIGNED")
     private Integer id;
-    @Column(length = 26, nullable = false)
+    @Column(length = 40, nullable = false)
     private String title;
     @Column(length = 3000, nullable = false)
     private String content;
@@ -62,12 +63,11 @@ public class Post {
         );
     }
 
-    public void saveImage(PostImage postImage) {
-        this.postImages.add(postImage);
-        postImage.setPost(this);
+    public void saveImage(List<PostImage> postImage) {
+        this.postImages = postImage;
     }
 
-    public void updatePost(PostRegisterRequest request) {
+    public void updatePost(PostModifyRequest request) {
         if (!request.getTitle().isBlank() && request.getTitle() != null) {
             this.title = request.getTitle();
         }
@@ -77,7 +77,6 @@ public class Post {
         if (!request.getType().isBlank() && request.getType() != null) {
             this.type = PostType.valueOf(request.getType().toUpperCase());
         }
-        //TODO : 이미지 교체 작업
     }
 
     public void deletePost() {

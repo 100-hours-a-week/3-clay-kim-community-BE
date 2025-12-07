@@ -9,6 +9,7 @@ import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.CommentRepository;
 import kr.kakaotech.community.repository.PostRepository;
+import kr.kakaotech.community.repository.PostStatusRepository;
 import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final PostStatusRepository postStatusRepository;
 
     /**
      * 댓글 등록
@@ -39,6 +41,8 @@ public class CommentService {
 
         Comment comment = new Comment(request.getContent(), user, post);
         commentRepository.save(comment);
+
+        postStatusRepository.incrementCommentCount(postId);
     }
 
     /**

@@ -8,6 +8,7 @@ import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.LikeRepository;
 import kr.kakaotech.community.repository.PostRepository;
+import kr.kakaotech.community.repository.PostStatusRepository;
 import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final PostStatusRepository postStatusRepository;
 
     @Transactional
     public LikeResponse toggleLike(UUID userId, int postId) {
@@ -34,6 +36,7 @@ public class LikeService {
         // 좋아요 취소
         if (optionalPostLike.isPresent()) {
             likeRepository.delete(optionalPostLike.get());
+            postStatusRepository.decrementLikeCount(postId);
 
             return new LikeResponse(false, getLikeCount(postId));
         }
@@ -47,6 +50,8 @@ public class LikeService {
 
             PostLike newLike = new PostLike(userRef, postRef);
             likeRepository.save(newLike);
+
+            postStatusRepository.incrementLikeCount(postId);
 
             return new LikeResponse(true, getLikeCount(postId));
 
@@ -71,7 +76,7 @@ public class LikeService {
      * 좋아요 갯수 세기
      */
     public int getLikeCount(int postId) {
-        log.info("like count {}", likeRepository.countByPost_Id(postId));
-        return likeRepository.countByPost_Id(postId);
+        int i = likeRepository.countByPost_Id(postId);
+        return postStatusRepository.findById(postId).get().getLikeCount();
     }
 }

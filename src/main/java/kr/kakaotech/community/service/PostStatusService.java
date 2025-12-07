@@ -26,7 +26,7 @@ public class PostStatusService {
     }
 
     public PostTypeCountResponse getPostTypeCount(String type) {
-        return new PostTypeCountResponse(postRepository.countPostByType(PostType.valueOf(type.toUpperCase())));
+        return new PostTypeCountResponse(postRepository.countByDeletedFalseAndType(PostType.valueOf(type.toUpperCase())));
     }
 
     /**
