@@ -36,9 +36,6 @@ target/
 
 # secret
 /src/main/resources/application-local.yaml
-/src/main/resources/application-docker.yaml
-
-
 
 # image
 /uploads/*
