@@ -1,0 +1,14 @@
+cloud:
+  aws:
+    region:
+      static: ${REGION:asdf}
+    credentials:
+      secret-key: asdf
+      access-key: asdf
+    s3:
+      bucket: ${BUCKET_NAME:asdf}
+
+image:
+  upload:
+    profile-url: ${PROFILE_URL:http}
+    post-url:    ${POST_URL:http}
