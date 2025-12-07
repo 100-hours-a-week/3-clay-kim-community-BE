@@ -1,0 +1,58 @@
+server:
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: community
+  profiles:
+    include: aws
+
+  datasource:
+    url:
+    username:
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+    show-sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+
+  thymeleaf:
+    cache: true
+
+  servlet:
+    multipart:
+      max-file-size: 5MB       # 파일 하나의 최대 크기
+      max-request-size: 25MB    # 요청 전체 크기 (파일 여러 개 업로드 시 합산)
+
+auth:
+  type: jwt
+
+jwt:
+  expirationtime:
+    accessTtl: 1800 # 30분
+    refreshTtl: 604800 # 7일
+  secret: ${JWT_SECRET:defaultfordevalsjfielsjfinaajfowinblxiejfwoihbya}
+
+session:
+  sessionTtl: 1800
+
+upload-dir:
+  image: uploads/images
+
+cors:
+  allowedOrigins:
+    - https://seonjun.store
+    - http://seonjun.store
