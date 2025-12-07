@@ -2,16 +2,21 @@ package kr.kakaotech.community.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import kr.kakaotech.community.dto.ApiResponse;
+import kr.kakaotech.community.dto.request.PostModifyRequest;
 import kr.kakaotech.community.dto.request.PostRegisterRequest;
 import kr.kakaotech.community.dto.response.PostDetailResponse;
 import kr.kakaotech.community.dto.response.PostListResponse;
 import kr.kakaotech.community.dto.response.PostStatusResponse;
+import kr.kakaotech.community.dto.response.PostSummaryWithImageResponse;
 import kr.kakaotech.community.service.PostService;
 import kr.kakaotech.community.service.PostStatusService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -25,8 +30,11 @@ public class PostController {
      * 게시글 작성
      */
     @PostMapping("/posts")
-    public ResponseEntity<ApiResponse<Integer>> registerPost(@RequestBody PostRegisterRequest postRegisterRequest, HttpServletRequest httpServletRequest) {
-        return ApiResponse.create("게시글 등록 성공", postService.registerPost(httpServletRequest.getAttribute("userId").toString(), postRegisterRequest));
+    public ResponseEntity<ApiResponse<Integer>> registerPost(@ModelAttribute PostRegisterRequest postRegisterRequest,
+                                                             @RequestPart(value = "postImages", required = false) List<MultipartFile> images,
+                                                             HttpServletRequest httpServletRequest) {
+
+        return ApiResponse.create("게시글 등록 성공", postService.registerPost(httpServletRequest.getAttribute("userId").toString(), postRegisterRequest, images));
     }
 
     /**
@@ -59,6 +67,14 @@ public class PostController {
     }
 
     /**
+     * Index 게시글 목록 불러오기
+     */
+    @GetMapping("/posts/index")
+    public ResponseEntity<ApiResponse<List<PostSummaryWithImageResponse>>> getIndexPostList() {
+        return ApiResponse.success("인덱스 게시글 목록 조회 성공", postService.getPostListWithImage(3));
+    }
+
+    /**
      * 게시글 상세 조회
      */
     @GetMapping("/posts/{postId}")
@@ -84,11 +100,14 @@ public class PostController {
      * 게시글 수정
      */
     @PatchMapping("/posts/{postId}")
-    public ResponseEntity<ApiResponse<Object>> registerPost(@PathVariable int postId, HttpServletRequest httpServletRequest, @RequestBody PostRegisterRequest postRegisterRequest) {
+    public ResponseEntity<ApiResponse<Object>> updatePost(@PathVariable int postId,
+                                                           @ModelAttribute PostModifyRequest postModifyRequest,
+                                                           @RequestPart(value = "postImages", required = false) List<MultipartFile> images,
+                                                           HttpServletRequest httpServletRequest) {
 
         String userId = httpServletRequest.getAttribute("userId").toString();
 
-        postService.updatePost(postId, userId, postRegisterRequest);
+        postService.updatePost(postId, userId, postModifyRequest, images);
 
         return ApiResponse.success("게시글 수정 성공", null);
     }

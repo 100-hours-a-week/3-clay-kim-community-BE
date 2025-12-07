@@ -5,18 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class PostDetailResponse {
+public class PostSummaryWithImageResponse {
+    private int id;
     private String title;
-    private String content;
-    private LocalDateTime createdAt;
-    private UUID userId;
     private String nickname;
-    private String profileImageUrl;
+    private LocalDateTime createdAt;
+    private int likeCount;
+    private int commentCount;
+    private int viewCount;
+    private String imageUrl;
     private PostType postType;
-    private List<ImageResponse> images;
+    private String postImageUrl;
 }

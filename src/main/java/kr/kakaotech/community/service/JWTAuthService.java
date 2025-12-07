@@ -63,7 +63,7 @@ public class JWTAuthService implements AuthService {
         TokenResponse tokenResponse = generateAndSaveToken(user);
         setCookie(response, tokenResponse);
 
-        return new UserLoginResponse(user.getNickname(), user.getEmail(), user.getId().toString());
+        return new UserLoginResponse(user.getNickname(), user.getEmail(), user.getId().toString(), user.getImage().getUrl());
     }
 
     /**

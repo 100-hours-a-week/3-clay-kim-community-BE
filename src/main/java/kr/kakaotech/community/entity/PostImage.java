@@ -8,7 +8,7 @@ import lombok.Getter;
 public class PostImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private int id;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "image_id")
@@ -23,10 +23,6 @@ public class PostImage {
 
     public PostImage(Image image) {
         this.image = image;
-    }
-
-    public void setPost(Post post) {
-        this.post = post;
     }
 
     public PostImage(Post post, Image image) {

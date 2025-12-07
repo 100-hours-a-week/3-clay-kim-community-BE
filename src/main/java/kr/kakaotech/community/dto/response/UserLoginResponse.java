@@ -9,4 +9,5 @@ public class UserLoginResponse {
     private String nickname;
     private String userEmail;
     private String userId;
+    private String imageUrl;
 }
