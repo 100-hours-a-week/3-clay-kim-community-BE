@@ -1,4 +1,4 @@
-package kr.kakaotech.community.global;
+package kr.kakaotech.community.global.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
