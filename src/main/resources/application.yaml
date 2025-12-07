@@ -50,6 +50,11 @@ session:
 upload-dir:
   image: uploads/images
 
+image:
+  upload:
+    profile-url: http
+    post-url: http
+
 cors:
   exposedHeaders:
     - Authorization
