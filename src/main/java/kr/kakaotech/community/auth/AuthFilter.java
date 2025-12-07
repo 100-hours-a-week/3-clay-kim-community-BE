@@ -47,7 +47,8 @@ public class AuthFilter extends OncePerRequestFilter {
                    uri.matches("/api/users/nickname") ||
                    uri.matches("/api/posts") ||
                    uri.matches("/api/posts/\\d+") ||
-                   uri.matches("/api/posts/\\d+/comments");
+                   uri.matches("/api/posts/\\d+/comments") ||
+                   uri.matches("/api/posts/index");
         }
 
         if ("POST".equals(method)) {

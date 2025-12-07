@@ -18,7 +18,7 @@ import java.util.Date;
 import java.util.Objects;
 
 @Slf4j
-@Component
+//@Component
 public class LocalImageManager implements ImageManager {
 
     @Value("${upload-dir.image}")
