@@ -75,7 +75,7 @@ public class AuthFilter extends OncePerRequestFilter {
                 authExceptionHandler(response, new CustomException(ErrorCode.EXPIRED_ACCESS_TOKEN));
                 return;
             } else {
-                if (requestURI.matches("/posts/\\d+/likes")) {
+                if (requestURI.matches("/api/posts/\\d+/likes")) {
                     filterChain.doFilter(request, response);
                     return;
                 }
