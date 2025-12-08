@@ -121,8 +121,7 @@ public class ImageService {
      */
     public Image getDefaultImage() {
         int randomId = new Random().nextInt(8) + 1;
-        String defaultImagePath = "/images/default/default-" + randomId + ".jpg";
-        return new Image(defaultImagePath);
+        return imageRepository.findById(randomId).orElse(null);
     }
 
     /**

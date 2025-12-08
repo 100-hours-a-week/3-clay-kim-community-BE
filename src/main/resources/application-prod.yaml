@@ -6,6 +6,9 @@ spring:
   application:
     name: community
 
+  jackson:
+    time-zone: Asia/Seoul
+
   datasource:
     url:
     username:
