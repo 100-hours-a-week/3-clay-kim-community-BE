@@ -57,11 +57,22 @@ cors:
   allowedOrigins:
     - https://seonjun.store
     - http://seonjun.store
-
+    
   exposedHeaders:
     - Authorization
     - Content-Type
     - access
     - refresh
 
-exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10, /api/health, /api/uploads, /api/posts/type, /api/images/status
+exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10, /api/health, /api/uploads, /api/posts/type, /api/images/status, /api/actuator, /actuator
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    prometheus:
+      enabled: true
+  server:
+    port: 8080
