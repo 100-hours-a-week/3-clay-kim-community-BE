@@ -75,6 +75,7 @@ public class JWTAuthService implements AuthService {
      * 쿠키 maxAge 0으로 설정
      * DB에서 삭제
      */
+    @Transactional
     @Override
     public void deleteAuth(HttpServletRequest request, HttpServletResponse response) {
         addTokenCookie(response, ACCESS_TOKEN, null, 0);

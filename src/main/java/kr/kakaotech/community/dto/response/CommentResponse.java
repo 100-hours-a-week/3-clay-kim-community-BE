@@ -30,7 +30,7 @@ public class CommentResponse {
                     comment.getId(),
                     comment.getContent(),
                     comment.getUser().getId().toString(),
-                    comment.getUser().getNickname(),
+                    comment.getUser().getNickname().startsWith("탈퇴_") ? "탈퇴한 회원이 작성한 댓글입니다" : comment.getUser().getNickname(),
                     comment.getCreatedAt()
             );
         }
