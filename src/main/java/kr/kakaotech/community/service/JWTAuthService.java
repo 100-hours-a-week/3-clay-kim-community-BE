@@ -63,7 +63,10 @@ public class JWTAuthService implements AuthService {
         TokenResponse tokenResponse = generateAndSaveToken(user);
         setCookie(response, tokenResponse);
 
-        return new UserLoginResponse(user.getNickname(), user.getEmail(), user.getId().toString(), user.getImage().getUrl());
+        return new UserLoginResponse(user.getNickname(),
+                user.getEmail(),
+                user.getId().toString(),
+                (user.getImage() != null) ? user.getImage().getUrl() : null);
     }
 
     /**
@@ -72,6 +75,7 @@ public class JWTAuthService implements AuthService {
      * 쿠키 maxAge 0으로 설정
      * DB에서 삭제
      */
+    @Transactional
     @Override
     public void deleteAuth(HttpServletRequest request, HttpServletResponse response) {
         addTokenCookie(response, ACCESS_TOKEN, null, 0);

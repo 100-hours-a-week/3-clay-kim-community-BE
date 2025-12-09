@@ -30,6 +30,9 @@ public class AuthFilter extends OncePerRequestFilter {
     private final AuthenticationStrategy authStrategy;
     private final ObjectMapper objectMapper;
 
+    private final String USERS_URL = "/api/users";
+    private final String LIKE_URL = "/api/posts/\\d+/likes";
+
     // 필터 제외 경로 설정
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
@@ -52,7 +55,7 @@ public class AuthFilter extends OncePerRequestFilter {
         }
 
         if ("POST".equals(method)) {
-            return uri.matches("/api/users");
+            return uri.matches(USERS_URL);
         }
 
         return false;
@@ -75,7 +78,7 @@ public class AuthFilter extends OncePerRequestFilter {
                 authExceptionHandler(response, new CustomException(ErrorCode.EXPIRED_ACCESS_TOKEN));
                 return;
             } else {
-                if (requestURI.matches("/posts/\\d+/likes")) {
+                if (requestURI.matches(LIKE_URL)) {
                     filterChain.doFilter(request, response);
                     return;
                 }
