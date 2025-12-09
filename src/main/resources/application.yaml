@@ -62,4 +62,15 @@ cors:
     - access
     - refresh
 
-exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10, /api/health, /api/uploads, /api/posts/type, /api/images/status
+exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10, /api/health, /api/uploads, /api/posts/type, /api/images/status, /api/actuator, /actuator
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  server:
+    port: 8080
