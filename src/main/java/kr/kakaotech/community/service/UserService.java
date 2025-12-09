@@ -136,6 +136,8 @@ public class UserService {
     /**
      * Soft Delete 유저 삭제
      * User의 deleted를 true로 변경, deletedAt을 추가합니다.
+     * 탈퇴 닉네임으로 변경합니다.
+     * 비밀번호 삭제합니다.
      *
      * @param userId
      */
