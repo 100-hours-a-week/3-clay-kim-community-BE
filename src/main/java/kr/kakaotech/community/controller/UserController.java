@@ -76,11 +76,17 @@ public class UserController {
 
     /**
      * 회원 탈퇴 - soft delete
+     * 1. 회원 탈퇴
+     *  - 탈퇴 닉네임으로 변경
+     *  - 비밀번호 삭제
+     * 2. Auth 쿠키 삭제
      */
     @PatchMapping("/users/{userId}/deactivation")
-    public void deleteUser(@PathVariable String userId, @RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest request) {
+    public void deleteUser(@PathVariable String userId, @RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest request, HttpServletResponse response) {
         String cookieId = request.getAttribute("userId").toString();
+
         userService.softDeleteUser(userId, cookieId, userPasswordRequest.getCurrentPassword());
+        authService.deleteAuth(request, response);
     }
 
     /**
