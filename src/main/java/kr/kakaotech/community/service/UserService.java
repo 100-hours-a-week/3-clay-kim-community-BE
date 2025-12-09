@@ -140,11 +140,22 @@ public class UserService {
      * @param userId
      */
     @Transactional
-    public void softDeleteUser(String userId) {
-        User getUser = userRepository.findById(UUID.fromString(userId)).orElseThrow(() ->
+    public void softDeleteUser(String userId, String cookieId, String inputPassword) {
+        if (!userId.equals(cookieId)) {
+            throw new CustomException(ErrorCode.NOT_FOUND_USER);
+        }
+
+        User user = userRepository.findById(UUID.fromString(userId)).orElseThrow(() ->
                 new CustomException(ErrorCode.NOT_FOUND_USER));
 
-        getUser.deleteUser();
+        String dbPassword = user.getPassword();
+
+        // 비밀번호 에러보다는 정보를 알려주지않기 위해 실패했다는 false 만 반환
+        if (!passwordEncoder.matches(inputPassword, dbPassword)) {
+            throw new CustomException(ErrorCode.BAD_PASSWORD);
+        }
+
+        user.deleteUser();
     }
 
     /**
@@ -175,12 +186,34 @@ public class UserService {
         User user = userRepository.findById(UUID.fromString(userId)).orElseThrow(() ->
                 new CustomException(ErrorCode.NOT_FOUND_USER));
 
+        String dbPassword = user.getPassword();
+        String currentPassword = userPasswordRequest.getCurrentPassword();
+        String enCodingNewPassword = passwordEncoder.encode(userPasswordRequest.getNewPassword());
+
         // 비밀번호 에러보다는 정보를 알려주지않기 위해 실패했다는 false 만 반환
-        if (!user.getPassword().equals(passwordEncoder.encode(userPasswordRequest.getCurrentPassword()))) {
+        if (!passwordEncoder.matches(currentPassword, dbPassword)) {
             throw new CustomException(ErrorCode.BAD_PASSWORD);
         }
 
-        user.updatePassword(passwordEncoder.encode(userPasswordRequest.getNewPassword()));
+        user.updatePassword(enCodingNewPassword);
         return true;
+    }
+
+    /**
+     * User 엔티티를 UserDetailResponse로 변환
+     * deleted가 true인 경우 nickname을 "탈퇴한 회원"으로 표시
+     */
+    private UserDetailResponse toUserDetailResponse(User user) {
+        String displayNickname = user.getDeleted() ? "탈퇴한 회원" : user.getNickname();
+        String imageUrl = (user.getImage() != null) ? user.getImage().getUrl() : null;
+
+        return new UserDetailResponse(
+                user.getId().toString(),
+                user.getEmail(),
+                displayNickname,
+                user.getDeleted(),
+                user.getRole().toString(),
+                imageUrl
+        );
     }
 }
