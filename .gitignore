@@ -5,6 +5,8 @@
 *.ipr
 .idea_modules/
 out/
+bin/
+*.class
 
 # Gradle
 .gradle/
