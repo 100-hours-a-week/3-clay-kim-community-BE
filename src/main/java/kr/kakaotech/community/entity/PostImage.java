@@ -2,7 +2,9 @@ package kr.kakaotech.community.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 
+@Setter
 @Getter
 @Entity(name = "post_image")
 public class PostImage {

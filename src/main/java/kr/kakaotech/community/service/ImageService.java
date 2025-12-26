@@ -90,7 +90,6 @@ public class ImageService {
      * 이미지 유효성 검사
      */
     private void validateImage(MultipartFile image) {
-
         if (image == null || image.isEmpty()) {
             throw new CustomException(ErrorCode.EMPTY_IMAGE);
         }

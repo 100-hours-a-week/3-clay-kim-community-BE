@@ -1,8 +1,11 @@
 package kr.kakaotech.community.entity;
 
 import jakarta.persistence.*;
-import kr.kakaotech.community.dto.request.PostRegisterRequest;
+import kr.kakaotech.community.dto.request.PostModifyRequest;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
@@ -10,6 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity(name = "posts")
 public class Post {
     @Id
@@ -35,39 +41,14 @@ public class Post {
     private User user;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<PostImage> postImages = new ArrayList<>();
 
-    public Post() {
+    public void saveImage(List<PostImage> postImageList) {
+        this.postImages = postImageList;
     }
 
-    public Post(String title, String content, PostType postType, String nickname, LocalDateTime createdAt, Boolean deleted, User user) {
-        this.title = title;
-        this.content = content;
-        this.type = postType;
-        this.nickname = nickname;
-        this.createdAt = createdAt;
-        this.deleted = deleted;
-        this.user = user;
-    }
-
-    public static Post toEntity(PostRegisterRequest request, User user) {
-        return new Post(
-                request.getTitle(),
-                request.getContent(),
-                PostType.valueOf(request.getType().toUpperCase()),
-                user.getNickname(),
-                LocalDateTime.now(),
-                false,
-                user
-        );
-    }
-
-    public void saveImage(PostImage postImage) {
-        this.postImages.add(postImage);
-        postImage.setPost(this);
-    }
-
-    public void updatePost(PostRegisterRequest request) {
+    public void updatePost(PostModifyRequest request) {
         if (!request.getTitle().isBlank() && request.getTitle() != null) {
             this.title = request.getTitle();
         }

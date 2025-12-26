@@ -1,0 +1,9 @@
+cloud:
+  aws:
+    region:
+      static: ${REGION}
+    credentials:
+      secret-key: asdf
+      access-key: asdf
+    s3:
+      bucket: ${BUCKET_NAME}

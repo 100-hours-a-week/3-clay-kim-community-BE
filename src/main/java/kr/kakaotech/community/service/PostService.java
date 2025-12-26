@@ -46,7 +46,15 @@ public class PostService {
         User getUser = userRepository.findById(UUID.fromString(userId)).orElseThrow(() ->
                 new CustomException(ErrorCode.NOT_FOUND_USER));
 
-        Post post = Post.toEntity(request, getUser);
+        Post post = Post.builder()
+                .title(request.getTitle())
+                .content(request.getContent())
+                .type(PostType.valueOf(request.getType().toUpperCase()))
+                .nickname(getUser.getNickname())
+                .createdAt(LocalDateTime.now())
+                .deleted(false)
+                .user(getUser)
+                .build();
 
         // 이미지 저장
         if (images != null && !images.isEmpty()) {
