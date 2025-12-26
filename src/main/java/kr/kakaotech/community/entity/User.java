@@ -62,7 +62,8 @@ public class User {
     }
 
     public void deleteUser() {
-        this.nickname = "탈퇴한 회원";
+        this.nickname = "탈퇴_" + this.id.toString().substring(0, 6);
+        this.password = "null";
         this.deleted = true;
         this.deletedAt = LocalDateTime.now();
     }

@@ -1,14 +1,17 @@
+server:
+  servlet:
+    context-path: /api
+
 spring:
   application:
     name: community
 
-  profiles:
-    active: local
-    include: aws
+  jackson:
+    time-zone: Asia/Seoul
 
   datasource:
-    url: jdbc:mysql://localhost:3306/community?serverTimezone=UTC&useSSL=false
-    username: root
+    url:
+    username:
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
@@ -18,22 +21,22 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        use_sql_comments: ture
+        use_sql_comments: true
     show-sql: true
 
   data:
     redis:
       host: localhost
       port: 6379
-      password: ${REDIS_SECRET:}
+      password:
 
   thymeleaf:
     cache: true
 
   servlet:
     multipart:
-      max-file-size: 10MB       # 파일 하나의 최대 크기
-      max-request-size: 30MB    # 요청 전체 크기 (파일 여러 개 업로드 시 합산)
+      max-file-size: 5MB       # 파일 하나의 최대 크기
+      max-request-size: 25MB    # 요청 전체 크기 (파일 여러 개 업로드 시 합산)
 
 auth:
   type: jwt
@@ -42,7 +45,7 @@ jwt:
   expirationtime:
     accessTtl: 1800 # 30분
     refreshTtl: 604800 # 7일
-  secret: ${JWT_SECRET:defaultjwtsecret}
+  secret: ${JWT_SECRET:defaultfordevalsjfielsjfinaajfowinblxiejfwoihbya}
 
 session:
   sessionTtl: 1800
@@ -50,12 +53,11 @@ session:
 upload-dir:
   image: uploads/images
 
-image:
-  upload:
-    profile-url: http
-    post-url: http
-
 cors:
+  allowedOrigins:
+    - https://seonjun.store
+    - http://seonjun.store
+    
   exposedHeaders:
     - Authorization
     - Content-Type
@@ -64,14 +66,10 @@ cors:
 
 exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10, /api/health, /api/uploads, /api/posts/type, /api/images/status, /api/actuator, /actuator
 
-data:
-  generator:
-    enabled: false  # 대용량 테스트 데이터 생성 (true로 변경 후 실행)
-
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
+        include: "*"
   server:
     port: 8080

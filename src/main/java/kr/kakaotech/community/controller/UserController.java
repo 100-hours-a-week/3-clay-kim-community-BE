@@ -1,11 +1,13 @@
 package kr.kakaotech.community.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import kr.kakaotech.community.dto.ApiResponse;
 import kr.kakaotech.community.dto.request.UserPasswordRequest;
 import kr.kakaotech.community.dto.request.UserRegisterRequest;
 import kr.kakaotech.community.dto.request.UserUpdateRequest;
 import kr.kakaotech.community.dto.response.UserDetailResponse;
+import kr.kakaotech.community.service.AuthService;
 import kr.kakaotech.community.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
     /**
      * 회원가입
@@ -73,10 +76,17 @@ public class UserController {
 
     /**
      * 회원 탈퇴 - soft delete
+     * 1. 회원 탈퇴
+     *  - 탈퇴 닉네임으로 변경
+     *  - 비밀번호 삭제
+     * 2. Auth 쿠키 삭제
      */
     @PatchMapping("/users/{userId}/deactivation")
-    public void deleteUser(@PathVariable String userId) {
-        userService.softDeleteUser(userId);
+    public void deleteUser(@PathVariable String userId, @RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest request, HttpServletResponse response) {
+        String cookieId = request.getAttribute("userId").toString();
+
+        userService.softDeleteUser(userId, cookieId, userPasswordRequest.getCurrentPassword());
+        authService.deleteAuth(request, response);
     }
 
     /**
@@ -107,8 +117,10 @@ public class UserController {
      * 비밀번호 변경
      */
     @PatchMapping("/users/password")
-    public ResponseEntity<ApiResponse<Boolean>> changePassword(@RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest httpServletRequest) {
-        boolean isChangePassword = userService.changePassword(httpServletRequest.getAttribute("userId").toString(), userPasswordRequest);
+    public ResponseEntity<ApiResponse<Boolean>> changePassword(@RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest request, HttpServletResponse response) {
+        boolean isChangePassword = userService.changePassword(request.getAttribute("userId").toString(), userPasswordRequest);
+
+        authService.deleteAuth(request, response);
         return ApiResponse.success("비밀번호 수정 결과", isChangePassword);
     }
 }
