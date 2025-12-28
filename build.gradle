@@ -57,6 +57,13 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
+test {
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+    }
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }
