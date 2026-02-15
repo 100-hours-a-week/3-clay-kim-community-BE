@@ -44,6 +44,12 @@ public class AuthFilter extends OncePerRequestFilter {
             return true;
         }
 
+        // Swagger UI 경로
+        if (uri.startsWith("/swagger-ui") || uri.startsWith("/v3/api-docs")
+                || uri.startsWith("/api/swagger-ui") || uri.startsWith("/api/v3/api-docs")) {
+            return true;
+        }
+
         // GET 요청 중 인증 불필요한 것들
         if ("GET".equals(method)) {
             return uri.matches("/api/users/email") ||
