@@ -1,5 +1,8 @@
 package kr.kakaotech.community.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import kr.kakaotech.community.dto.ApiResponse;
 import kr.kakaotech.community.dto.response.LikeResponse;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Optional;
 import java.util.UUID;
 
+@Tag(name = "PostStatus", description = "좋아요 및 게시글 통계 API")
 @Slf4j
 @RequiredArgsConstructor
 @Controller
@@ -25,6 +29,7 @@ public class PostStatusController {
     private final LikeService likeService;
     private final PostStatusService postStatusService;
 
+    @Operation(summary = "좋아요 토글", description = "게시글 좋아요를 토글합니다. 좋아요가 없으면 추가, 있으면 삭제됩니다.")
     @PostMapping("/posts/{postId}/likes")
     public ResponseEntity<ApiResponse<LikeResponse>> toggleLike(@PathVariable int postId, HttpServletRequest request) {
         UUID userId = UUID.fromString(request.getAttribute("userId").toString());
@@ -32,6 +37,7 @@ public class PostStatusController {
         return ApiResponse.success("좋아요 토글 성공", likeService.toggleLike(userId, postId));
     }
 
+    @Operation(summary = "좋아요 상태 조회", description = "현재 사용자의 좋아요 여부와 전체 좋아요 수를 조회합니다.")
     @GetMapping("/posts/{postId}/likes")
     public ResponseEntity<ApiResponse<LikeResponse>> getLikeStatus(@PathVariable int postId, HttpServletRequest request) {
         Optional<Object> optionalUserId = Optional.ofNullable(request.getAttribute("userId"));
@@ -40,8 +46,10 @@ public class PostStatusController {
         return ApiResponse.success("좋아요 상태", likeResponse);
     }
 
+    @Operation(summary = "게시글 타입별 수 조회", description = "IN_PROGRESS/COMPLETED 타입별 게시글 수를 조회합니다.")
     @GetMapping("/posts/type")
-    public ResponseEntity<ApiResponse<PostTypeCountResponse>> getTypeStatus(@RequestParam String type) {
+    public ResponseEntity<ApiResponse<PostTypeCountResponse>> getTypeStatus(
+            @Parameter(description = "게시글 타입 (IN_PROGRESS/COMPLETED)") @RequestParam String type) {
         return ApiResponse.success("해당 타입의 게시글 수 입니다.", postStatusService.getPostTypeCount(type));
     }
 }

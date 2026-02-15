@@ -50,7 +50,7 @@ public enum ErrorCode {
     /**
      * 이미지 에러
      */
-    EMPTY_IMAGE("이미지 요청이 오지않았습니다.", HttpStatus.BAD_REQUEST),
+    EMPTY_IMAGE("이미지가 존재하지 않습니다.", HttpStatus.BAD_REQUEST),
     NOT_FOUND_IMAGE("이미지를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     IMAGE_BAD_CONTENT_TYPE("이미지 타입 에러", HttpStatus.BAD_REQUEST),
     IMAGE_TOO_LARGE("이미지 용량은 5MB 이하로 등록해주세요.", HttpStatus.BAD_REQUEST),

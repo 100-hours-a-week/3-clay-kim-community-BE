@@ -244,14 +244,12 @@ public class DataGenerator implements CommandLineRunner {
 
         for (Integer postId : postIds) {
             int viewCount = random(0, 1000);
-            int likeCount = random(0, 100);
-            int commentCount = random(0, 10);
 
             batchArgs.add(new Object[]{
                     postId,
                     viewCount,
-                    likeCount,
-                    commentCount
+                    0,  // likeCount는 나중에 실제 개수로 업데이트
+                    0   // commentCount는 나중에 실제 개수로 업데이트
             });
 
             if (++batchCount % BATCH_SIZE == 0) {
@@ -340,6 +338,19 @@ public class DataGenerator implements CommandLineRunner {
         List<Integer> ids = jdbcTemplate.queryForList("SELECT id FROM comments ORDER BY id", Integer.class);
         commentIds.addAll(ids);
         log.info("Comment 데이터 생성 완료! (총 {}건)", commentIds.size());
+
+        // PostStatus의 commentCount를 실제 댓글 개수로 업데이트
+        log.info("PostStatus의 commentCount 동기화 시작...");
+        String updateSql = """
+            UPDATE post_statuses ps
+            SET comment_count = (
+                SELECT COUNT(*)
+                FROM comments c
+                WHERE c.post_id = ps.post_id AND c.deleted = false
+            )
+        """;
+        jdbcTemplate.update(updateSql);
+        log.info("PostStatus의 commentCount 동기화 완료!");
     }
 
     @Transactional
@@ -382,6 +393,19 @@ public class DataGenerator implements CommandLineRunner {
             jdbcTemplate.batchUpdate(sql, batchArgs);
         }
         log.info("PostLike 데이터 생성 완료!");
+
+        // PostStatus의 likeCount를 실제 좋아요 개수로 업데이트
+        log.info("PostStatus의 likeCount 동기화 시작...");
+        String updateSql = """
+            UPDATE post_statuses ps
+            SET like_count = (
+                SELECT COUNT(*)
+                FROM post_likes pl
+                WHERE pl.post_id = ps.post_id
+            )
+        """;
+        jdbcTemplate.update(updateSql);
+        log.info("PostStatus의 likeCount 동기화 완료!");
     }
 
     @Transactional
