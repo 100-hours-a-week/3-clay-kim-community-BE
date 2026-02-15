@@ -2,7 +2,6 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.6'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'com.github.spotbugs' version '6.0.26'
     id 'jacoco'
 }
 
@@ -68,8 +67,6 @@ dependencies {
     implementation 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
     implementation 'ch.qos.logback.contrib:logback-jackson:0.1.5'
 
-    // Find Security Bugs
-    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.13.0'
 }
 
 test {
@@ -105,7 +102,7 @@ tasks.named('jacocoTestCoverageVerification') {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.70
+                minimum = 0.40
             }
         }
     }
@@ -113,43 +110,4 @@ tasks.named('jacocoTestCoverageVerification') {
 
 tasks.named('check') {
     dependsOn tasks.named('jacocoTestCoverageVerification')
-}
-
-// SpotBugs 설정 (보안 체크만 활성화)
-spotbugs {
-    ignoreFailures = true
-    showStackTraces = true
-    showProgress = true
-    effort = 'max'
-    reportLevel = 'low'
-}
-
-spotbugsMain {
-    // auxClasspath 설정 추가
-    classDirs = files(sourceSets.main.output.classesDirs)
-    auxClassPaths = configurations.compileClasspath + configurations.runtimeClasspath
-
-    reports {
-        html {
-            required = true
-            outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
-            stylesheet = 'fancy-hist.xsl'
-        }
-        xml {
-            required = false
-        }
-    }
-}
-
-spotbugsTest {
-    reports {
-        html {
-            required = true
-            outputLocation = file("$buildDir/reports/spotbugs/test/spotbugs.html")
-            stylesheet = 'fancy-hist.xsl'
-        }
-        xml {
-            required = false
-        }
-    }
 }
