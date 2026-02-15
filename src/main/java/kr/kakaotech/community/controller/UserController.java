@@ -1,5 +1,7 @@
 package kr.kakaotech.community.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.kakaotech.community.dto.ApiResponse;
@@ -18,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Tag(name = "User", description = "회원 API")
 @RequiredArgsConstructor
 @RestController
 public class UserController {
@@ -25,9 +28,7 @@ public class UserController {
     private final UserService userService;
     private final AuthService authService;
 
-    /**
-     * 회원가입
-     */
+    @Operation(summary = "회원가입", description = "이메일, 닉네임, 비밀번호로 회원가입합니다. 프로필 이미지 첨부 가능합니다.")
     @PostMapping(value = "/users")
     public ResponseEntity<ApiResponse<String>> register(@ModelAttribute UserRegisterRequest userDto,
                                                         @RequestPart(value = "profileImage", required = false) MultipartFile image) {
@@ -36,9 +37,7 @@ public class UserController {
         return ApiResponse.create("회원가입 성공", userDto.getEmail());
     }
 
-    /**
-     * 특정 회원 불러오기
-     */
+    @Operation(summary = "회원 상세 조회", description = "회원 ID로 상세 정보를 조회합니다.")
     @GetMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<UserDetailResponse>> getUser(@PathVariable String userId) {
         UserDetailResponse userDetailResponse = userService.getUser(userId);
@@ -46,9 +45,7 @@ public class UserController {
         return ApiResponse.success("단일 회원 조회 성공", userDetailResponse);
     }
 
-    /**
-     * 회원 리스트 불러오기
-     */
+    @Operation(summary = "회원 목록 조회", description = "페이징된 회원 목록을 조회합니다.")
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<Page<UserDetailResponse>>> getUserList(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
@@ -60,9 +57,7 @@ public class UserController {
         return ResponseEntity.status(200).body(response);
     }
 
-    /**
-     * 회원 정보 업데이트
-     */
+    @Operation(summary = "회원 정보 수정", description = "닉네임, 프로필 이미지를 수정합니다.")
     @PatchMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<UserDetailResponse>> updateUser(@PathVariable String userId,
                                                                       @ModelAttribute UserUpdateRequest userUpdateRequest,
@@ -74,13 +69,7 @@ public class UserController {
         return ResponseEntity.ok(apiResponse);
     }
 
-    /**
-     * 회원 탈퇴 - soft delete
-     * 1. 회원 탈퇴
-     *  - 탈퇴 닉네임으로 변경
-     *  - 비밀번호 삭제
-     * 2. Auth 쿠키 삭제
-     */
+    @Operation(summary = "회원 탈퇴", description = "회원을 소프트 삭제합니다. 닉네임 변경 및 쿠키가 삭제됩니다.")
     @PatchMapping("/users/{userId}/deactivation")
     public void deleteUser(@PathVariable String userId, @RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest request, HttpServletResponse response) {
         String cookieId = request.getAttribute("userId").toString();
@@ -89,11 +78,7 @@ public class UserController {
         authService.deleteAuth(request, response);
     }
 
-    /**
-     * 유저 input 실시간 검증
-     *
-     * 이메일과 닉네임을 실시간으로 검증하여 결과를 반환합니다.
-     */
+    @Operation(summary = "이메일 중복 확인", description = "이메일 중복 여부를 실시간 검증합니다.")
     @GetMapping("/users/email")
     public ResponseEntity<ApiResponse<Boolean>> checkUserEmail(@RequestParam String email, HttpServletRequest request) {
         String uri = request.getRequestURI();
@@ -102,9 +87,7 @@ public class UserController {
         return ApiResponse.success("duplication 결과", userService.duplicateCheckUserInfo(userInfo, email));
     }
 
-    /**
-     * 닉네임 실시간 중복 검증
-     */
+    @Operation(summary = "닉네임 중복 확인", description = "닉네임 중복 여부를 실시간 검증합니다.")
     @GetMapping("/users/nickname")
     public ResponseEntity<ApiResponse<Boolean>> checkUserNickname(@RequestParam String nickname, HttpServletRequest request) {
         String uri = request.getRequestURI();
@@ -113,9 +96,7 @@ public class UserController {
         return ApiResponse.success("duplication 결과", userService.duplicateCheckUserInfo(userInfo, nickname));
     }
 
-    /**
-     * 비밀번호 변경
-     */
+    @Operation(summary = "비밀번호 변경", description = "현재 비밀번호 확인 후 새 비밀번호로 변경합니다. 변경 후 재로그인이 필요합니다.")
     @PatchMapping("/users/password")
     public ResponseEntity<ApiResponse<Boolean>> changePassword(@RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest request, HttpServletResponse response) {
         boolean isChangePassword = userService.changePassword(request.getAttribute("userId").toString(), userPasswordRequest);

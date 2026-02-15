@@ -12,6 +12,7 @@ import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Builder
 @Getter
 @AllArgsConstructor
 @Entity(name = "users")

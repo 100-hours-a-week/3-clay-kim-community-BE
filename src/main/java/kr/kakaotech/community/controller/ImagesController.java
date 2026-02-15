@@ -1,5 +1,7 @@
 package kr.kakaotech.community.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import kr.kakaotech.community.dto.ApiResponse;
 import kr.kakaotech.community.dto.response.ImageStatusResponse;
@@ -15,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+@Tag(name = "Image", description = "이미지 API")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -22,6 +25,7 @@ public class ImagesController {
 
     private final ImageService imageService;
 
+    @Operation(summary = "이미지 업로드", description = "이미지를 업로드합니다.")
     @PostMapping("/images")
     public void saveImages(@RequestPart List<MultipartFile> images, HttpServletRequest request) {
         System.out.println(images);
@@ -30,6 +34,7 @@ public class ImagesController {
         imageService.saveImage(images, null);
     }
 
+    @Operation(summary = "이미지 수 조회", description = "전체 이미지 수를 조회합니다.")
     @GetMapping("/images/status")
     public ResponseEntity<ApiResponse<ImageStatusResponse>> getImageStatus() {
         return ApiResponse.success("이미지 숫자 입니다.", imageService.getImageCount());
