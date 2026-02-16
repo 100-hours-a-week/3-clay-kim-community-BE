@@ -5,6 +5,8 @@ server:
 spring:
   application:
     name: community
+  profiles:
+    include: aws
 
   jackson:
     time-zone: Asia/Seoul
@@ -52,6 +54,10 @@ session:
 
 upload-dir:
   image: uploads/images
+
+image:
+  storage:
+    type: s3
 
 cors:
   allowedOrigins:
