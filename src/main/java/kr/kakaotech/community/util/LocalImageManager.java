@@ -19,7 +19,7 @@ import java.util.Date;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "image.storage.type", havingValue = "local")
+@ConditionalOnProperty(name = "image.storage.type", havingValue = "local", matchIfMissing = true)
 public class LocalImageManager implements ImageManager {
 
     @Value("${upload-dir.image}")
