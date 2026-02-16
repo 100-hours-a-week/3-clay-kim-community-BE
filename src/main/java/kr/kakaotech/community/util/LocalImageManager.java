@@ -3,6 +3,7 @@ package kr.kakaotech.community.util;
 import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,10 +16,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Objects;
 
 @Slf4j
-//@Component
+@Component
+@ConditionalOnProperty(name = "image.storage.type", havingValue = "local")
 public class LocalImageManager implements ImageManager {
 
     @Value("${upload-dir.image}")
