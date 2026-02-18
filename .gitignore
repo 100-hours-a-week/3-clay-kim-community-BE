@@ -41,6 +41,7 @@ target/
 
 # secret
 /src/main/resources/application-local.yaml
+.env
 
 # image
 /uploads/*
