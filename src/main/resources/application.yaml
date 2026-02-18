@@ -4,6 +4,8 @@ spring:
 
   profiles:
     active: local
+    group:
+      prod: aws
 
   datasource:
     url: jdbc:mysql://localhost:3306/community?serverTimezone=UTC&useSSL=false
