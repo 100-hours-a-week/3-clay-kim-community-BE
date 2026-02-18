@@ -88,7 +88,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:Environment,Values=prod" "Key=tag:DeployTarget,Values=community-app" \
             --comment "Deploy Backend" \
-            --parameters "commands=[\"cd /home/ubuntu/app\",\"AWS_REGION=${{ secrets.AWS_REGION }} AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }} ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }} sh deploy.sh latest\"]" \
+            --parameters "commands=[\"cd /home/ubuntu/app\",\"DOCKER_DEFAULT_PLATFORM=linux/amd64 AWS_REGION=${{ secrets.AWS_REGION }} AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }} BACK_REPOSITORY=${{ secrets.ECR_REPOSITORY }} bash deploy.sh backend latest\"]" \
             --output text
 
         
