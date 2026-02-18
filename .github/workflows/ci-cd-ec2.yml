@@ -90,5 +90,3 @@ jobs:
             --comment "Deploy Backend" \
             --parameters "commands=[\"cd /home/ubuntu/app\",\"DOCKER_DEFAULT_PLATFORM=linux/amd64 AWS_REGION=${{ secrets.AWS_REGION }} AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }} BACK_REPOSITORY=${{ secrets.ECR_REPOSITORY }} bash deploy.sh backend latest\"]" \
             --output text
-
-        
