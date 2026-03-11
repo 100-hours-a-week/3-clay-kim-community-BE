@@ -41,3 +41,6 @@ target/
 
 # image
 /uploads/*
+
+# wiki
+community-CLOUD
