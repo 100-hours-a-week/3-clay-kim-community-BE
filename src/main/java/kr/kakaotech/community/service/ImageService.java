@@ -46,7 +46,6 @@ public class ImageService {
         validateImage(image);
 
         // 이미지 업로드
-        // S3 업로드 (Lambda 경유)
         String filePath = imageManager.uploadImage(image);
 
         // 이미지 저장
