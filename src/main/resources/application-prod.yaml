@@ -58,10 +58,8 @@ image:
     type: s3
 
 cors:
-  allowedOrigins:
-    - https://seonjun.store
-    - http://seonjun.store
-    
+  allowedOrigins: ${CORS_ALLOWED_ORIGINS:}
+
   exposedHeaders:
     - Authorization
     - Content-Type
