@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,7 +30,7 @@ public class UserController {
     private final AuthService authService;
 
     @Operation(summary = "회원가입", description = "이메일, 닉네임, 비밀번호로 회원가입합니다. 프로필 이미지 첨부 가능합니다.")
-    @PostMapping(value = "/users")
+    @PostMapping(value = "/users", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> register(@ModelAttribute UserRegisterRequest userDto,
                                                         @RequestPart(value = "profileImage", required = false) MultipartFile image) {
         userService.registerUser(userDto, image);
