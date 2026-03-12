@@ -47,7 +47,7 @@ target/
 /uploads/*
 
 # wiki
-community-CLOUD
+community-CLOUD/**
 
 # Node
 node_modules/
