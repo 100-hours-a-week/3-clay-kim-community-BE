@@ -17,8 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.Random;
-
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -113,14 +111,6 @@ public class ImageService {
         if (image.getSize() > MAX_SIZE) {
             throw new CustomException(ErrorCode.IMAGE_TOO_LARGE);
         }
-    }
-
-    /**
-     * 기본 이미지 랜덤 제공
-     */
-    public Image getDefaultImage() {
-        int randomId = new Random().nextInt(8) + 1;
-        return imageRepository.findById(randomId).orElse(null);
     }
 
     /**

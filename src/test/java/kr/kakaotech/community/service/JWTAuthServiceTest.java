@@ -95,6 +95,7 @@ class JWTAuthServiceTest {
             assertThat(loginResponse.getNickname()).isEqualTo("테스터");
             assertThat(loginResponse.getUserEmail()).isEqualTo("test@email.com");
             assertThat(loginResponse.getUserId()).isEqualTo(userId.toString());
+            assertThat(loginResponse.getImageUrl()).isNull();
 
             verify(refreshTokenRepository).deleteByUserId(userId);
             verify(jwtProvider).createAccess(userId.toString(), "USER");

@@ -66,7 +66,12 @@ public class SessionAuthService implements AuthService {
         redisTemplate.opsForValue().set(SESSION_PREFIX + sessionId, sessionDao, sessionTtl, TimeUnit.SECONDS);
 
 
-        return new UserLoginResponse(user.getNickname(), user.getEmail(), user.getId().toString(), user.getImage().getUrl());
+        return new UserLoginResponse(
+                user.getNickname(),
+                user.getEmail(),
+                user.getId().toString(),
+                user.getImageUrl()
+        );
     }
 
     @Override

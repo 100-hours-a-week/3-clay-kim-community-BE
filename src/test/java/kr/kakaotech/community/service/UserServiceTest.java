@@ -9,7 +9,6 @@ import kr.kakaotech.community.entity.User;
 import kr.kakaotech.community.entity.UserRole;
 import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
-import kr.kakaotech.community.repository.ImageRepository;
 import kr.kakaotech.community.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,8 +39,6 @@ class UserServiceTest {
     PasswordEncoder passwordEncoder;
     @Mock
     ImageService imageService;
-    @Mock
-    ImageRepository imageRepository;
 
     @InjectMocks
     UserService userService;
@@ -65,6 +62,7 @@ class UserServiceTest {
                 .role(UserRole.USER)
                 .image(defaultImage)
                 .build();
+
     }
 
     @Nested
@@ -72,7 +70,7 @@ class UserServiceTest {
     class RegisterUser {
 
         @Test
-        @DisplayName("성공 - 이미지 없이 기본 이미지로 가입")
+        @DisplayName("성공 - 이미지 없이 가입하면 프로필 이미지는 비워둠")
         void success_withDefaultImage() {
             // given
             UserRegisterRequest request = new UserRegisterRequest("new@email.com", "newUser", "password", "USER");
@@ -80,15 +78,38 @@ class UserServiceTest {
             given(userRepository.existsByNickname("newUser")).willReturn(false);
             given(userRepository.existsByEmail("new@email.com")).willReturn(false);
             given(passwordEncoder.encode("password")).willReturn("encodedPassword");
-            given(imageService.getDefaultImage()).willReturn(defaultImage);
 
             // when
             userService.registerUser(request, null);
 
             // then
-            verify(userRepository).save(any(User.class));
-            verify(imageService).getDefaultImage();
+            verify(userRepository).save(argThat(savedUser ->
+                    savedUser.getImage() == null &&
+                    savedUser.getEmail().equals("new@email.com") &&
+                    savedUser.getNickname().equals("newUser")
+            ));
             verify(imageService, never()).saveImage(any());
+        }
+
+        @Test
+        @DisplayName("성공 - 조회 시 프로필 이미지가 없으면 null 반환")
+        void success_withoutProfileImage_returnsDefaultUrl() {
+            // given
+            User userWithoutImage = User.builder()
+                    .id(userId)
+                    .email("test@email.com")
+                    .password("encodedPassword")
+                    .nickname("테스터")
+                    .deleted(false)
+                    .role(UserRole.USER)
+                    .build();
+            given(userRepository.findById(userId)).willReturn(Optional.of(userWithoutImage));
+
+            // when
+            UserDetailResponse response = userService.getUser(userId.toString());
+
+            // then
+            assertThat(response.getImageUrl()).isNull();
         }
 
         @Test

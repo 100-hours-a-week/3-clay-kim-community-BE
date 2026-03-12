@@ -67,6 +67,7 @@ class PostServiceTest {
                 .role(UserRole.USER)
                 .image(userImage)
                 .build();
+
     }
 
     private Post createPost(int id, User user) {
@@ -76,7 +77,7 @@ class PostServiceTest {
     }
 
     private PostSummaryResponse createSummary(int id) {
-        return new PostSummaryResponse(id, "제목" + id, "테스터", LocalDateTime.now(), 0, 0, 0, "https://img.com/profile.png", PostType.IN_PROGRESS);
+        return new PostSummaryResponse(id, "제목" + id, "테스터", LocalDateTime.now(), 0, 0, 0, null, PostType.IN_PROGRESS);
     }
 
     @Nested
@@ -152,6 +153,7 @@ class PostServiceTest {
             assertThat(response.getPosts()).hasSize(3);
             assertThat(response.isHasNext()).isTrue();
             assertThat(response.getNextCursor()).isEqualTo(3);
+            assertThat(response.getPosts().get(0).getImageUrl()).isNull();
             verify(postRepository).findTopPost(any());
             verify(postRepository, never()).findPostByCursor(anyInt(), any());
         }
@@ -240,6 +242,7 @@ class PostServiceTest {
             assertThat(response.getTitle()).isEqualTo("제목");
             assertThat(response.getNickname()).isEqualTo("테스터");
             assertThat(response.getUserId()).isEqualTo(userId);
+            assertThat(response.getProfileImageUrl()).isEqualTo("https://img.com/profile.png");
             assertThat(response.getImages()).hasSize(1);
             assertThat(response.getImages().get(0).getImageUrl()).isEqualTo("https://img.com/post1.png");
         }
