@@ -1,3 +1,7 @@
+server:
+  servlet:
+    context-path: /api
+
 image:
   storage:
     type: local
@@ -13,3 +17,6 @@ spring:
       host: ${LOCAL_REDIS_HOST:localhost}
       port: ${LOCAL_REDIS_PORT:6379}
       password: ${LOCAL_REDIS_PASSWORD:}
+
+cors:
+  allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
