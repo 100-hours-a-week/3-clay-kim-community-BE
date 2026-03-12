@@ -8,7 +8,6 @@ import kr.kakaotech.community.entity.Image;
 import kr.kakaotech.community.entity.User;
 import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
-import kr.kakaotech.community.repository.ImageRepository;
 import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Random;
 import java.util.UUID;
 
 @Slf4j
@@ -30,8 +28,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ImageService imageService;
-    private final String DEFAULT_IMAGE = "default";
-    private final ImageRepository imageRepository;
 
     /**
      * 회원가입
@@ -60,8 +56,6 @@ public class UserService {
         if (image != null && !image.isEmpty()) {
             Image imageEntity = imageService.saveImage(image);
             user.addImage(imageEntity);
-        } else {
-            user.addImage(imageService.getDefaultImage());
         }
 
         userRepository.save(user);
@@ -77,14 +71,7 @@ public class UserService {
         User getUser = userRepository.findById(UUID.fromString(userId)).orElseThrow(() ->
                 new CustomException(ErrorCode.NOT_FOUND_USER));
 
-        return new UserDetailResponse(
-                getUser.getId().toString(),
-                getUser.getEmail(),
-                getUser.getNickname(),
-                getUser.getDeleted(),
-                getUser.getRole().toString(),
-                getUser.getImage().getUrl()
-        );
+        return toUserDetailResponse(getUser);
     }
 
     /**
@@ -97,13 +84,7 @@ public class UserService {
     public Page<UserDetailResponse> getUserPage(Pageable pageable) {
         Page<User> userPage = userRepository.findAll(pageable);
 
-        return userPage.map(getUser -> new UserDetailResponse(
-                getUser.getId().toString(),
-                getUser.getEmail(), getUser.getNickname(),
-                getUser.getDeleted(),
-                getUser.getRole().toString(),
-                getUser.getImage().getUrl()
-        ));
+        return userPage.map(this::toUserDetailResponse);
     }
 
     /**
@@ -122,15 +103,7 @@ public class UserService {
             getUser.addImage(imageEntity);
         }
 
-        return new UserDetailResponse(
-                getUser.getId().toString(),
-                getUser.getEmail(),
-                getUser.getNickname(),
-                getUser.getDeleted(),
-                getUser.getRole().toString(),
-                getUser.getImage().getUrl()
-
-        );
+        return toUserDetailResponse(getUser);
     }
 
     /**
@@ -207,7 +180,7 @@ public class UserService {
      */
     private UserDetailResponse toUserDetailResponse(User user) {
         String displayNickname = user.getDeleted() ? "탈퇴한 회원" : user.getNickname();
-        String imageUrl = (user.getImage() != null) ? user.getImage().getUrl() : null;
+        String imageUrl = user.getImageUrl();
 
         return new UserDetailResponse(
                 user.getId().toString(),

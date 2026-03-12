@@ -28,9 +28,9 @@ public class PostSummaryResponse {
                 post.getTitle(),
                 post.getNickname(),
                 post.getCreatedAt(),
-                postStatus.getViewCount(),
                 postStatus.getLikeCount(),
                 postStatus.getCommentCount(),
+                postStatus.getViewCount(),
                 userImageUrl,
                 post.getType()
         );

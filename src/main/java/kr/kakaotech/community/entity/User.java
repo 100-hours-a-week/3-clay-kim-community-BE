@@ -76,4 +76,8 @@ public class User {
     public void addImage(Image image) {
         this.image = image;
     }
+
+    public String getImageUrl() {
+        return image != null ? image.getUrl() : null;
+    }
 }

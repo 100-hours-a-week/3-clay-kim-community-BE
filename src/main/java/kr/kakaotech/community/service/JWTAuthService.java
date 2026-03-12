@@ -66,7 +66,7 @@ public class JWTAuthService implements AuthService {
         return new UserLoginResponse(user.getNickname(),
                 user.getEmail(),
                 user.getId().toString(),
-                (user.getImage() != null) ? user.getImage().getUrl() : null);
+                user.getImageUrl());
     }
 
     /**

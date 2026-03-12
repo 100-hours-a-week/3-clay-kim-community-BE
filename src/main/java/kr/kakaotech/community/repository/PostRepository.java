@@ -17,11 +17,12 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query("""
                 SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
                             p.id, p.title, p.nickname, p.createdAt,
-                            ps.likeCount, ps.commentCount, ps.viewCount, u.image.url, p.type
+                            ps.likeCount, ps.commentCount, ps.viewCount, ui.url, p.type
                 )
                 FROM posts p
                 JOIN post_statuses ps ON ps.postId = p.id
                 JOIN users u ON p.user = u
+                LEFT JOIN u.image ui
                 WHERE p.deleted = false
                 ORDER BY p.id DESC
             """)
@@ -30,11 +31,12 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query("""
                 SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
                             p.id, p.title, p.nickname, p.createdAt,
-                            ps.likeCount, ps.commentCount, ps.viewCount, u.image.url, p.type
+                            ps.likeCount, ps.commentCount, ps.viewCount, ui.url, p.type
                 )
                 FROM posts p
                 JOIN post_statuses ps ON ps.post = p
                 JOIN users u ON p.user = u
+                LEFT JOIN u.image ui
                 WHERE p.id < :cursor AND p.deleted = false
                 ORDER BY p.id DESC
             """)
@@ -43,11 +45,12 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query("""
                 SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
                             p.id, p.title, p.nickname, p.createdAt,
-                            ps.likeCount, ps.commentCount, ps.viewCount, u.image.url, p.type
+                            ps.likeCount, ps.commentCount, ps.viewCount, ui.url, p.type
                 )
                 from posts p
                 join post_statuses ps on ps.post = p
                 join users u on p.user = u
+                left join u.image ui
                 where p.deleted = false
                 and p.createdAt >= :startDate
                 order by ps.likeCount desc
@@ -57,11 +60,12 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query("""
                 SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
                             p.id, p.title, p.nickname, p.createdAt,
-                            ps.likeCount, ps.commentCount, ps.viewCount, u.image.url, p.type
+                            ps.likeCount, ps.commentCount, ps.viewCount, ui.url, p.type
                 )
                 from posts p
                 join post_statuses ps on ps.post = p
                 join users u on p.user = u
+                left join u.image ui
                 where p.deleted = false
                 AND p.type = 'completed'
                 order by ps.likeCount desc
@@ -71,15 +75,16 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query("""
                 SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
                             p.id, p.title, p.nickname, p.createdAt,
-                            ps.likeCount, ps.commentCount, ps.viewCount, u.image.url, p.type
+                            ps.likeCount, ps.commentCount, ps.viewCount, ui.url, p.type
                 )
                 from posts p
                 join post_statuses ps on ps.post = p
                 join users u on p.user = u
+                left join u.image ui
                 where p.deleted = false
                 AND p.nickname = :nickname
             """)
-    List<PostSummaryResponse> findPostByNickname(String nickname, Pageable pageable);
+    List<PostSummaryResponse> findPostByNickname(@Param("nickname") String nickname, Pageable pageable);
 
     @Query("""
         SELECT p
@@ -87,7 +92,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
         LEFT JOIN FETCH p.postImages pi
         LEFT JOIN FETCH pi.image
         JOIN FETCH p.user u
-        JOIN FETCH u.image
+        LEFT JOIN FETCH u.image
         WHERE p.deleted = false
         AND p.id = :postId
     """)
@@ -102,7 +107,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
         ps.likeCount,
         ps.commentCount,
         ps.viewCount,
-        u.image.url,
+        ui.url,
         p.type,
         (
             SELECT MIN(pi2.image.url)
@@ -113,6 +118,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     FROM posts p
         JOIN post_statuses ps ON ps.post = p
         JOIN users u ON p.user = u
+        LEFT JOIN u.image ui
     WHERE p.deleted = false
     ORDER BY p.createdAt DESC
     """)

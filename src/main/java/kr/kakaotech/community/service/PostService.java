@@ -99,10 +99,7 @@ public class PostService {
     @Transactional
     public List<PostSummaryWithImageResponse> getPostListWithImage(int size) {
         Pageable pageable = PageRequest.of(0, size);
-
-        List<PostSummaryWithImageResponse> postWithImage = postRepository.findPostWithImage(pageable);
-
-        return postWithImage;
+        return postRepository.findPostWithImage(pageable);
     }
 
     /**
@@ -183,7 +180,7 @@ public class PostService {
                 post.getCreatedAt(),
                 post.getUser().getId(),
                 post.getNickname(),
-                post.getUser().getImage().getUrl(),
+                post.getUser().getImageUrl(),
                 post.getType(),
                 images
         );
