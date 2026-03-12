@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import kr.kakaotech.community.dto.ApiResponse;
 import kr.kakaotech.community.dto.request.UserLoginRequest;
 import kr.kakaotech.community.dto.response.UserLoginResponse;
@@ -26,7 +27,7 @@ public class AuthController {
 
     @Operation(summary = "로그인", description = "이메일/비밀번호로 로그인합니다. JWT 토큰이 쿠키에 설정됩니다.")
     @PostMapping("/auth")
-    public ResponseEntity<ApiResponse<UserLoginResponse>> getTokenByLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<UserLoginResponse>> getTokenByLogin(@Valid @RequestBody UserLoginRequest userLoginRequest, HttpServletResponse response) {
         UserLoginResponse userLoginResponse = authService.getAuth(userLoginRequest, response);
         log.info(response.toString());
         return ApiResponse.success("로그인 성공", userLoginResponse);

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import kr.kakaotech.community.dto.ApiResponse;
 import kr.kakaotech.community.dto.request.PostModifyRequest;
 import kr.kakaotech.community.dto.request.PostRegisterRequest;
@@ -32,7 +33,7 @@ public class PostController {
 
     @Operation(summary = "게시글 작성", description = "게시글을 작성합니다. 이미지는 최대 5장까지 첨부 가능합니다.")
     @PostMapping("/posts")
-    public ResponseEntity<ApiResponse<Integer>> registerPost(@ModelAttribute PostRegisterRequest postRegisterRequest,
+    public ResponseEntity<ApiResponse<Integer>> registerPost(@Valid @ModelAttribute PostRegisterRequest postRegisterRequest,
                                                              @RequestPart(value = "postImages", required = false) List<MultipartFile> images,
                                                              HttpServletRequest httpServletRequest) {
 
@@ -95,7 +96,7 @@ public class PostController {
     @Operation(summary = "게시글 수정", description = "게시글을 수정합니다. 이미지 추가/삭제가 가능합니다.")
     @PatchMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<Object>> updatePost(@PathVariable int postId,
-                                                           @ModelAttribute PostModifyRequest postModifyRequest,
+                                                           @Valid @ModelAttribute PostModifyRequest postModifyRequest,
                                                            @RequestPart(value = "postImages", required = false) List<MultipartFile> images,
                                                            HttpServletRequest httpServletRequest) {
 
