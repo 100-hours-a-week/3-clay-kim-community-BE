@@ -3,6 +3,7 @@ package kr.kakaotech.community.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import kr.kakaotech.community.dto.ApiResponse;
 import kr.kakaotech.community.dto.request.CommentRequest;
 import kr.kakaotech.community.dto.response.CommentResponse;
@@ -25,7 +26,7 @@ public class CommentController {
 
     @Operation(summary = "댓글 등록", description = "게시글에 댓글을 등록합니다.")
     @PostMapping("/posts/{postId}/comments")
-    public ResponseEntity<ApiResponse<Void>> registerComment(@PathVariable int postId, @RequestBody CommentRequest request, HttpServletRequest httpServletRequest) {
+    public ResponseEntity<ApiResponse<Void>> registerComment(@PathVariable int postId, @Valid @RequestBody CommentRequest request, HttpServletRequest httpServletRequest) {
         commentService.registerComment(httpServletRequest.getAttribute("userId").toString(), postId, request);
 
         ApiResponse<Void> apiResponse = new ApiResponse<>("댓글 등록 성공", null);
@@ -46,7 +47,7 @@ public class CommentController {
 
     @Operation(summary = "댓글 수정", description = "댓글 내용을 수정합니다.")
     @PatchMapping("/comments/{commentId}")
-    public ResponseEntity<ApiResponse<Void>> updateComment(@PathVariable int commentId, @RequestBody CommentRequest request, HttpServletRequest httpServletRequest) {
+    public ResponseEntity<ApiResponse<Void>> updateComment(@PathVariable int commentId, @Valid @RequestBody CommentRequest request, HttpServletRequest httpServletRequest) {
         commentService.updateComment(httpServletRequest.getAttribute("userId").toString(), commentId, request);
 
         ApiResponse<Void> apiResponse = new ApiResponse<>("댓글 수정 성공", null);

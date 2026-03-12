@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import kr.kakaotech.community.dto.ApiResponse;
 import kr.kakaotech.community.dto.request.UserPasswordRequest;
 import kr.kakaotech.community.dto.request.UserRegisterRequest;
@@ -31,7 +32,7 @@ public class UserController {
 
     @Operation(summary = "회원가입", description = "이메일, 닉네임, 비밀번호로 회원가입합니다. 프로필 이미지 첨부 가능합니다.")
     @PostMapping(value = "/users", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<String>> register(@ModelAttribute UserRegisterRequest userDto,
+    public ResponseEntity<ApiResponse<String>> register(@Valid @ModelAttribute UserRegisterRequest userDto,
                                                         @RequestPart(value = "profileImage", required = false) MultipartFile image) {
         userService.registerUser(userDto, image);
 
@@ -61,7 +62,7 @@ public class UserController {
     @Operation(summary = "회원 정보 수정", description = "닉네임, 프로필 이미지를 수정합니다.")
     @PatchMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<UserDetailResponse>> updateUser(@PathVariable String userId,
-                                                                      @ModelAttribute UserUpdateRequest userUpdateRequest,
+                                                                      @Valid @ModelAttribute UserUpdateRequest userUpdateRequest,
                                                                       @RequestPart(value = "profileImage", required = false) MultipartFile image,
                                                                       HttpServletRequest request) {
         UserDetailResponse userDetailResponse = userService.updateUser(userId, userUpdateRequest, image);
@@ -72,7 +73,7 @@ public class UserController {
 
     @Operation(summary = "회원 탈퇴", description = "회원을 소프트 삭제합니다. 닉네임 변경 및 쿠키가 삭제됩니다.")
     @PatchMapping("/users/{userId}/deactivation")
-    public void deleteUser(@PathVariable String userId, @RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest request, HttpServletResponse response) {
+    public void deleteUser(@PathVariable String userId, @Valid @RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest request, HttpServletResponse response) {
         String cookieId = request.getAttribute("userId").toString();
 
         userService.softDeleteUser(userId, cookieId, userPasswordRequest.getCurrentPassword());
@@ -99,7 +100,7 @@ public class UserController {
 
     @Operation(summary = "비밀번호 변경", description = "현재 비밀번호 확인 후 새 비밀번호로 변경합니다. 변경 후 재로그인이 필요합니다.")
     @PatchMapping("/users/password")
-    public ResponseEntity<ApiResponse<Boolean>> changePassword(@RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<Boolean>> changePassword(@Valid @RequestBody UserPasswordRequest userPasswordRequest, HttpServletRequest request, HttpServletResponse response) {
         boolean isChangePassword = userService.changePassword(request.getAttribute("userId").toString(), userPasswordRequest);
 
         authService.deleteAuth(request, response);
