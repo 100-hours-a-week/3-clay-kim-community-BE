@@ -23,8 +23,16 @@ public class CorsFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String uri = request.getRequestURI();
+
+        // actuator 경로는 내부 서비스 호출이므로 CORS 체크 스킵
+        if (uri.startsWith("/actuator") || uri.startsWith("/api/actuator")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String origin = request.getHeader("Origin");
-        log.debug("[CorsFilter] Origin: {}, Method: {}, URI: {}", origin, request.getMethod(), request.getRequestURI());
+        log.debug("[CorsFilter] Origin: {}, Method: {}, URI: {}", origin, request.getMethod(), uri);
 
         // origin이 허용 목록에 있으면 해당 origin을 설정
         if (origin != null && corsProperties.getAllowedOrigins().contains(origin)) {
