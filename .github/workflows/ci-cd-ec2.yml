@@ -73,6 +73,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+    env:
+      BACKEND_APP_DIR: /opt/community/V1/docker/app
     steps:
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v2
@@ -88,5 +90,5 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:Environment,Values=prod" "Key=tag:DeployTarget,Values=community-app" \
             --comment "Deploy Backend" \
-            --parameters "commands=[\"cd /home/ubuntu/app\",\"AWS_REGION=${{ secrets.AWS_REGION }} AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }} BACK_REPOSITORY=${{ secrets.ECR_REPOSITORY }} bash deploy.sh backend latest\"]" \
+            --parameters "commands=[\"cd ${BACKEND_APP_DIR}\",\"AWS_REGION=${{ secrets.AWS_REGION }} AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }} BACK_REPOSITORY=${{ secrets.ECR_REPOSITORY }} bash deploy.sh backend latest\"]" \
             --output text
