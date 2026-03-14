@@ -20,9 +20,9 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        format_sql: true
-        use_sql_comments: true
-    show-sql: true
+        format_sql: false
+        use_sql_comments: false
+    show-sql: false
 
   data:
     redis:
@@ -73,5 +73,9 @@ management:
     web:
       exposure:
         include: "*"
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
   server:
     port: 8080
