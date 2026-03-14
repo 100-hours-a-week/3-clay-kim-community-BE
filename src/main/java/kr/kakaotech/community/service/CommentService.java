@@ -76,6 +76,7 @@ public class CommentService {
         Comment comment = validateComment(userId, commentId);
 
         comment.delete();
+        postStatusRepository.decrementCommentCount(comment.getPost().getId());
     }
 
     /**

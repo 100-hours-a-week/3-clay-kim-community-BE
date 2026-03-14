@@ -42,4 +42,12 @@ public interface PostStatusRepository extends JpaRepository<PostStatus, Integer>
     """, nativeQuery = true)
     void incrementCommentCount(@Param("id") int id);
 
+    @Modifying
+    @Query(value = """
+        UPDATE post_statuses
+        SET comment_count = GREATEST(comment_count - 1, 0)
+        WHERE post_id = :id
+    """, nativeQuery = true)
+    void decrementCommentCount(@Param("id") int id);
+
 }
