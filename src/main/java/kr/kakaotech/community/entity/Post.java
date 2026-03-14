@@ -12,6 +12,10 @@ import java.util.List;
 
 @Getter
 @Entity(name = "posts")
+@Table(name = "posts", indexes = {
+        @Index(name = "idx_posts_deleted_created", columnList = "deleted, created_at DESC"),
+        @Index(name = "idx_posts_deleted_type", columnList = "deleted, type")
+})
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
