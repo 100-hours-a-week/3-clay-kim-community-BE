@@ -96,7 +96,7 @@ public class PostService {
     /**
      * 인덱스용 이미지 포함 게시글 목록 조회
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public List<PostSummaryWithImageResponse> getPostListWithImage(int size) {
         Pageable pageable = PageRequest.of(0, size);
         return postRepository.findPostWithImage(pageable);
@@ -105,7 +105,7 @@ public class PostService {
     /**
      * 게시글 목록 조회
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public PostListResponse getPostList(Integer cursor, int size) {
         Pageable pageable = PageRequest.of(0, size);
         List<PostSummaryResponse> postList;
@@ -122,6 +122,7 @@ public class PostService {
     /**
      * 기간에 따른 인기글 목록 메서드
      */
+    @Transactional(readOnly = true)
     public PostListResponse getLikePostList(Integer cursor, String period, int size) {
         LocalDateTime startDate = switch (period) {
             case "daily" -> LocalDateTime.now().minusDays(1);
@@ -140,6 +141,7 @@ public class PostService {
     /**
      * nickname에 따른 검색
      */
+    @Transactional(readOnly = true)
     public PostListResponse getNicknamePostList(Integer cursor, String nickname, int size) {
         List<PostSummaryResponse> postList = postRepository.findPostByNickname(
                 nickname,
@@ -152,6 +154,7 @@ public class PostService {
     /**
      * TOP 10 좋아요 순서 정렬
      */
+    @Transactional(readOnly = true)
     public PostListResponse getPostTop10List() {
         List<PostSummaryResponse> postList = postRepository.findTop10Post(PageRequest.of(0, 10));
 
@@ -161,7 +164,7 @@ public class PostService {
     /**
      * 게시글 상세조회
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public PostDetailResponse getPostDetails(int postId) {
         Post post = postRepository.findPostDetailsWithImages(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));

@@ -65,6 +65,7 @@ public class LikeService {
     /**
      * 좋아요 상태 가져오기
      */
+    @Transactional(readOnly = true)
     public boolean getLikeStatus(Optional<Object> optionalUserId, int postId) {
         if (optionalUserId.isEmpty()) return false;
 
@@ -75,8 +76,8 @@ public class LikeService {
     /**
      * 좋아요 갯수 세기
      */
+    @Transactional(readOnly = true)
     public int getLikeCount(int postId) {
-        int i = likeRepository.countByPost_Id(postId);
         return postStatusRepository.findById(postId).get().getLikeCount();
     }
 }
