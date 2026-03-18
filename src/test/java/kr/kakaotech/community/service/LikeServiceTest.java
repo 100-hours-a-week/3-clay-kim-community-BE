@@ -39,6 +39,8 @@ class LikeServiceTest {
     PostRepository postRepository;
     @Mock
     PostStatusRepository postStatusRepository;
+    @Mock
+    PostService postService;
 
     @InjectMocks
     LikeService likeService;
