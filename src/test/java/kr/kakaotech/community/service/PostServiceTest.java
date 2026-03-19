@@ -44,6 +44,10 @@ class PostServiceTest {
     ImageService imageService;
     @Mock
     PostStatusService postStatusService;
+    @Mock
+    org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
+    @Mock
+    org.springframework.data.redis.core.ValueOperations<String, Object> valueOperations;
 
     @InjectMocks
     PostService postService;
@@ -373,6 +377,8 @@ class PostServiceTest {
             List<PostSummaryResponse> posts = List.of(
                     createSummary(1), createSummary(2), createSummary(3)
             );
+            given(redisTemplate.opsForValue()).willReturn(valueOperations);
+            given(valueOperations.get("posts:top10")).willReturn(null);
             given(postRepository.findTop10Post(any())).willReturn(posts);
 
             // when
