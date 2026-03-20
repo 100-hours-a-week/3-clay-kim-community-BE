@@ -25,6 +25,7 @@ public class PostStatusService {
         postStatusRepository.incrementViewCount(postId);
     }
 
+    @Transactional(readOnly = true)
     public PostTypeCountResponse getPostTypeCount(String type) {
         return new PostTypeCountResponse(postRepository.countByDeletedFalseAndType(PostType.valueOf(type.toUpperCase())));
     }
@@ -34,6 +35,7 @@ public class PostStatusService {
      *
      * 다른 통계정보는 각자 들고오기 때문에 임시 삭제
      */
+    @Transactional(readOnly = true)
     public PostStatusResponse getPostStatus(int postId) {
         return new PostStatusResponse(postStatusRepository.findById(postId).map(PostStatus::getViewCount).orElse(0));
     }

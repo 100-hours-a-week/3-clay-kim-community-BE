@@ -9,6 +9,7 @@ import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,7 +22,8 @@ import java.util.Date;
 
 @Slf4j
 @RequiredArgsConstructor
-//@Component
+@Component
+@ConditionalOnProperty(name = "image.storage.type", havingValue = "s3")
 public class S3ImageManager implements ImageManager {
 
     private final AmazonS3 amazonS3;

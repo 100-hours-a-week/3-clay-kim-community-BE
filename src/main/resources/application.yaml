@@ -4,12 +4,13 @@ spring:
 
   profiles:
     active: local
-    include: aws
+    group:
+      prod: aws
 
   datasource:
     url: jdbc:mysql://localhost:3306/community?serverTimezone=UTC&useSSL=false
     username: root
-    password:
+    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -74,7 +75,7 @@ springdoc:
 
 data:
   generator:
-    enabled: false  # 대용량 테스트 데이터 생성 (true로 변경 후 실행)
+    enabled: ${DATA_GENERATOR_ENABLED:false}  # 대용량 테스트 데이터 생성 (환경변수로 제어)
 
 management:
   endpoints:

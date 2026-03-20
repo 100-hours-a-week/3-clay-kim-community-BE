@@ -5,11 +5,13 @@ import kr.kakaotech.community.entity.PostStatus;
 import kr.kakaotech.community.entity.PostType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 public class PostSummaryResponse {
     private int id;
@@ -28,9 +30,9 @@ public class PostSummaryResponse {
                 post.getTitle(),
                 post.getNickname(),
                 post.getCreatedAt(),
-                postStatus.getViewCount(),
                 postStatus.getLikeCount(),
                 postStatus.getCommentCount(),
+                postStatus.getViewCount(),
                 userImageUrl,
                 post.getType()
         );

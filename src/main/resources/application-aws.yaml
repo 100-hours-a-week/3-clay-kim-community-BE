@@ -1,9 +1,6 @@
 cloud:
   aws:
     region:
-      static: ${REGION:asdf}
-    credentials:
-      secret-key: asdf
-      access-key: asdf
+      static: ${AWS_REGION:}
     s3:
-      bucket: ${BUCKET_NAME:asdf}
+      bucket: ${BUCKET_NAME:}

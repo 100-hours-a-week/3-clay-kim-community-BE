@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 @Entity(name = "post_likes")
 @Getter
 @NoArgsConstructor
+@Table(name = "post_likes",
+        uniqueConstraints = @UniqueConstraint(name = "uk_post_likes_user_post", columnNames = {"user_id", "post_id"})
+)
 public class PostLike {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

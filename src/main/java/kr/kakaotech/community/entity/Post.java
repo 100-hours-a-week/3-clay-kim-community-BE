@@ -12,6 +12,10 @@ import java.util.List;
 
 @Getter
 @Entity(name = "posts")
+@Table(name = "posts", indexes = {
+        @Index(name = "idx_posts_deleted_created", columnList = "deleted, created_at DESC"),
+        @Index(name = "idx_posts_deleted_type", columnList = "deleted, type")
+})
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,13 +72,13 @@ public class Post {
     }
 
     public void updatePost(PostModifyRequest request) {
-        if (!request.getTitle().isBlank() && request.getTitle() != null) {
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
             this.title = request.getTitle();
         }
-        if (!request.getContent().isBlank() && request.getContent() != null) {
+        if (request.getContent() != null && !request.getContent().isBlank()) {
             this.content = request.getContent();
         }
-        if (!request.getType().isBlank() && request.getType() != null) {
+        if (request.getType() != null && !request.getType().isBlank()) {
             this.type = PostType.valueOf(request.getType().toUpperCase());
         }
     }

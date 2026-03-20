@@ -36,7 +36,8 @@ public class RedisConfig {
         template.setValueSerializer(serializer);
         template.setHashValueSerializer(serializer);
 
-        template.setEnableTransactionSupport(true); // 트랜잭션 필요 시
+        // enableTransactionSupport를 끄면 @Transactional 내에서도 Redis 읽기가 즉시 반환됨
+        // 켜면 MULTI/EXEC로 큐잉되어 get()이 null을 반환하는 문제 발생
         template.afterPropertiesSet();
 
         return template;

@@ -73,7 +73,6 @@ class LikeServiceTest {
             given(postRepository.getReferenceById(postId)).willReturn(postRef);
             given(likeRepository.save(any(PostLike.class))).willReturn(null);
             // getLikeCount 내부 호출
-            given(likeRepository.countByPost_Id(postId)).willReturn(1);
             ReflectionTestUtils.setField(postStatus, "likeCount", 1);
             given(postStatusRepository.findById(postId)).willReturn(Optional.of(postStatus));
 
@@ -97,7 +96,6 @@ class LikeServiceTest {
 
             given(likeRepository.findByUser_IdAndPost_Id(userId, postId)).willReturn(Optional.of(existingLike));
             // getLikeCount 내부 호출
-            given(likeRepository.countByPost_Id(postId)).willReturn(0);
             ReflectionTestUtils.setField(postStatus, "likeCount", 0);
             given(postStatusRepository.findById(postId)).willReturn(Optional.of(postStatus));
 
@@ -192,7 +190,6 @@ class LikeServiceTest {
         void success() {
             // given
             ReflectionTestUtils.setField(postStatus, "likeCount", 42);
-            given(likeRepository.countByPost_Id(postId)).willReturn(42);
             given(postStatusRepository.findById(postId)).willReturn(Optional.of(postStatus));
 
             // when

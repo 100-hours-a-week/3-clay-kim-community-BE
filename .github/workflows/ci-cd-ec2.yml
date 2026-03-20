@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
@@ -12,6 +13,8 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: production
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
 
     steps:
       - uses: actions/checkout@v4
@@ -34,31 +37,44 @@ jobs:
 
       # 1. AWS 인증
       - name: Configure AWS
-        if: github.ref == 'refs/heads/main'
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # 2.Login to Amazon ECR
+      # 2. Amazon ECR 로그인
       - name: Login to Amazon ECR
-        if: github.ref == 'refs/heads/main'
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 3. Docker 이미지 빌드 & 푸시
-      - name: Build docker image
-        if: github.ref == 'refs/heads/main'
-        run: |
-          docker build -t ${{ secrets.ECR_REPOSITORY }} .
-          docker tag ${{ secrets.ECR_REPOSITORY }}:latest \
-            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
-          docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+      # 3. Docker Buildx 설정 (원격 캐시 사용을 위해 필요)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # 4. Docker 이미지 빌드 & 푸시 (GitHub Actions 캐시 사용)
+      - name: Build and push docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    environment: production
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+    env:
+      BACKEND_APP_DIR: /opt/community/V1/docker/app
     steps:
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v2
@@ -72,9 +88,7 @@ jobs:
           aws ssm send-command \
             --region ${{ secrets.AWS_REGION }} \
             --document-name "AWS-RunShellScript" \
-            --targets "Key=tag:Name,Values=community-backend-ec2" \
+            --targets "Key=tag:Environment,Values=prod" "Key=tag:DeployTarget,Values=community-app" \
             --comment "Deploy Backend" \
-            --parameters '{"commands":["cd /home/ubuntu/app","sh deploy.sh"]}' \
+            --parameters "commands=[\"cd ${BACKEND_APP_DIR}\",\"AWS_REGION=${{ secrets.AWS_REGION }} AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }} BACK_REPOSITORY=${{ secrets.ECR_REPOSITORY }} bash deploy.sh backend latest\"]" \
             --output text
-
-        

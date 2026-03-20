@@ -13,10 +13,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -30,9 +32,13 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostStatusRepository postStatusRepository;
     private final ImageService imageService;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private final int IMAGE_LIMIT_COUNT = 5;
     private final PostStatusService postStatusService;
+
+    private static final String TOP10_CACHE_KEY = "posts:top10";
+    private static final Duration TOP10_CACHE_TTL = Duration.ofMinutes(5);
 
     /**
      * Post 등록
@@ -96,19 +102,16 @@ public class PostService {
     /**
      * 인덱스용 이미지 포함 게시글 목록 조회
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public List<PostSummaryWithImageResponse> getPostListWithImage(int size) {
         Pageable pageable = PageRequest.of(0, size);
-
-        List<PostSummaryWithImageResponse> postWithImage = postRepository.findPostWithImage(pageable);
-
-        return postWithImage;
+        return postRepository.findPostWithImage(pageable);
     }
 
     /**
      * 게시글 목록 조회
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public PostListResponse getPostList(Integer cursor, int size) {
         Pageable pageable = PageRequest.of(0, size);
         List<PostSummaryResponse> postList;
@@ -125,6 +128,7 @@ public class PostService {
     /**
      * 기간에 따른 인기글 목록 메서드
      */
+    @Transactional(readOnly = true)
     public PostListResponse getLikePostList(Integer cursor, String period, int size) {
         LocalDateTime startDate = switch (period) {
             case "daily" -> LocalDateTime.now().minusDays(1);
@@ -143,6 +147,7 @@ public class PostService {
     /**
      * nickname에 따른 검색
      */
+    @Transactional(readOnly = true)
     public PostListResponse getNicknamePostList(Integer cursor, String nickname, int size) {
         List<PostSummaryResponse> postList = postRepository.findPostByNickname(
                 nickname,
@@ -153,10 +158,18 @@ public class PostService {
     }
 
     /**
-     * TOP 10 좋아요 순서 정렬
+     * TOP 10 좋아요 순서 정렬 (Redis cache-aside)
      */
+    @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
     public PostListResponse getPostTop10List() {
-        List<PostSummaryResponse> postList = postRepository.findTop10Post(PageRequest.of(0, 10));
+        List<PostSummaryResponse> postList = (List<PostSummaryResponse>) redisTemplate.opsForValue().get(TOP10_CACHE_KEY);
+
+        if (postList == null) {
+            log.info("Top10 cache miss - querying DB");
+            postList = postRepository.findTop10Post(PageRequest.of(0, 10));
+            redisTemplate.opsForValue().set(TOP10_CACHE_KEY, postList, TOP10_CACHE_TTL);
+        }
 
         return getPostListAndNextCursorResponse(11, postList);
     }
@@ -164,7 +177,7 @@ public class PostService {
     /**
      * 게시글 상세조회
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public PostDetailResponse getPostDetails(int postId) {
         Post post = postRepository.findPostDetailsWithImages(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -183,7 +196,7 @@ public class PostService {
                 post.getCreatedAt(),
                 post.getUser().getId(),
                 post.getNickname(),
-                post.getUser().getImage().getUrl(),
+                post.getUser().getImageUrl(),
                 post.getType(),
                 images
         );
