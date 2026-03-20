@@ -175,13 +175,6 @@ public class PostService {
     }
 
     /**
-     * Top10 캐시 무효화
-     */
-    public void evictTop10Cache() {
-        redisTemplate.delete(TOP10_CACHE_KEY);
-    }
-
-    /**
      * 게시글 상세조회
      */
     @Transactional(readOnly = true)
