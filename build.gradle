@@ -65,6 +65,9 @@ dependencies {
     // aop
     implementation 'org.springframework.boot:spring-boot-starter-aop'
 
+    // datasource-proxy (SQL query counting)
+    implementation 'net.ttddyy:datasource-proxy:1.10'
+
     // logback json (for PLG stack / Alloy)
     implementation 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
     implementation 'ch.qos.logback.contrib:logback-jackson:0.1.5'

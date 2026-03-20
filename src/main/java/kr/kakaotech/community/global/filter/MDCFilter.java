@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import kr.kakaotech.community.global.monitoring.QueryCountHolder;
 import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -21,12 +22,15 @@ public class MDCFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
+            QueryCountHolder.reset();
             MDC.put("requestId", UUID.randomUUID().toString().substring(0, 8));
             MDC.put("method", request.getMethod());
             MDC.put("uri", request.getRequestURI());
             MDC.put("clientIp", request.getRemoteAddr());
             filterChain.doFilter(request, response);
         } finally {
+            MDC.put("queryCount", String.valueOf(QueryCountHolder.getCount()));
+            QueryCountHolder.reset();
             MDC.clear();
         }
     }
