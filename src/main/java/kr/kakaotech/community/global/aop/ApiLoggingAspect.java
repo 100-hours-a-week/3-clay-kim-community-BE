@@ -11,6 +11,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.servlet.HandlerMapping;
 
 @Aspect
 @Component
@@ -28,10 +29,13 @@ public class ApiLoggingAspect {
 
         String method = "UNKNOWN";
         String uri = "UNKNOWN";
+        String uriPattern = "UNKNOWN";
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
             method = request.getMethod();
             uri = request.getRequestURI();
+            String pattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+            uriPattern = (pattern != null) ? pattern : uri;
         }
 
         String handler = joinPoint.getSignature().toShortString();
@@ -42,7 +46,7 @@ public class ApiLoggingAspect {
             Object result = joinPoint.proceed();
             long elapsed = System.currentTimeMillis() - start;
             int queryCount = QueryCountHolder.getCount();
-            queryCountMetrics.record(queryCount);
+            queryCountMetrics.record(queryCount, method, uriPattern);
             log.info("[API Response] {} {} → {}ms | queries={}", method, uri, elapsed, queryCount);
             if (queryCount >= QUERY_COUNT_WARN_THRESHOLD) {
                 log.warn("[N+1 WARNING] {} {} executed {} queries (threshold={})", method, uri, queryCount, QUERY_COUNT_WARN_THRESHOLD);
@@ -51,7 +55,7 @@ public class ApiLoggingAspect {
         } catch (Exception e) {
             long elapsed = System.currentTimeMillis() - start;
             int queryCount = QueryCountHolder.getCount();
-            queryCountMetrics.record(queryCount);
+            queryCountMetrics.record(queryCount, method, uriPattern);
             log.error("[API Error] {} {} → {}ms | queries={} | {}", method, uri, elapsed, queryCount, e.getMessage());
             throw e;
         }
