@@ -28,7 +28,6 @@ public class LikeService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final PostStatusRepository postStatusRepository;
-    private final PostService postService;
 
     @Transactional
     public LikeResponse toggleLike(UUID userId, int postId) {
@@ -38,7 +37,6 @@ public class LikeService {
         if (optionalPostLike.isPresent()) {
             likeRepository.delete(optionalPostLike.get());
             postStatusRepository.decrementLikeCount(postId);
-            postService.evictTop10Cache();
 
             return new LikeResponse(false, getLikeCount(postId));
         }
@@ -54,7 +52,6 @@ public class LikeService {
             likeRepository.save(newLike);
 
             postStatusRepository.incrementLikeCount(postId);
-            postService.evictTop10Cache();
 
             return new LikeResponse(true, getLikeCount(postId));
 
