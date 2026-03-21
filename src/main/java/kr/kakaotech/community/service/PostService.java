@@ -167,7 +167,8 @@ public class PostService {
 
         if (postList == null) {
             log.info("Top10 cache miss - querying DB");
-            postList = postRepository.findTop10Post(PageRequest.of(0, 10));
+            LocalDateTime startDate = LocalDateTime.now().minusMonths(2);
+            postList = postRepository.findTop10Post(startDate, PageRequest.of(0, 10));
             redisTemplate.opsForValue().set(TOP10_CACHE_KEY, postList, TOP10_CACHE_TTL);
         }
 

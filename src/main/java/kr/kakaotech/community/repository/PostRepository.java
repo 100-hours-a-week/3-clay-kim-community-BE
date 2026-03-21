@@ -68,9 +68,10 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
                 left join u.image ui
                 where p.deleted = false
                 AND p.type = 'completed'
+                AND p.createdAt >= :startDate
                 order by ps.likeCount desc
             """)
-    List<PostSummaryResponse> findTop10Post(Pageable pageable);
+    List<PostSummaryResponse> findTop10Post(@Param("startDate") LocalDateTime startDate, Pageable pageable);
 
     @Query("""
                 SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
