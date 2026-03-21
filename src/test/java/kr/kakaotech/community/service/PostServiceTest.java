@@ -379,7 +379,7 @@ class PostServiceTest {
             );
             given(redisTemplate.opsForValue()).willReturn(valueOperations);
             given(valueOperations.get("posts:top10")).willReturn(null);
-            given(postRepository.findTop10Post(any())).willReturn(posts);
+            given(postRepository.findTop10Post(any(LocalDateTime.class), any())).willReturn(posts);
 
             // when
             PostListResponse response = postService.getPostTop10List();
