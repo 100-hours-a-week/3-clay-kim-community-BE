@@ -1,7 +1,3 @@
-server:
-  servlet:
-    context-path: /api
-
 spring:
   application:
     name: community
@@ -67,6 +63,13 @@ cors:
     - refresh
 
 exclusive-path: /api/auth, /api/error, /api/images, /api/posts/top10, /api/health, /api/uploads, /api/posts/type, /api/images/status, /api/actuator, /actuator
+
+cloud:
+  aws:
+    region:
+      static: ${AWS_REGION:}
+    s3:
+      bucket: ${BUCKET_NAME:}
 
 management:
   endpoints:

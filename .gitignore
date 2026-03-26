@@ -41,6 +41,7 @@ target/
 
 # secret
 /src/main/resources/application-local.yaml
+/src/main/resources/application-remote.yaml
 .env
 
 # image
