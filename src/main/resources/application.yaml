@@ -1,11 +1,13 @@
+server:
+  servlet:
+    context-path: /api
+
 spring:
   application:
     name: community
 
   profiles:
     active: local
-    group:
-      prod: aws
 
   datasource:
     url: jdbc:mysql://localhost:3306/community?serverTimezone=UTC&useSSL=false
@@ -19,7 +21,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        use_sql_comments: ture
+        use_sql_comments: true
     show-sql: true
 
   data:
