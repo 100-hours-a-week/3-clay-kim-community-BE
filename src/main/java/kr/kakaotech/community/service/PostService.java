@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -163,13 +165,24 @@ public class PostService {
     @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
     public PostListResponse getPostTop10List() {
-        List<PostSummaryResponse> postList = (List<PostSummaryResponse>) redisTemplate.opsForValue().get(TOP10_CACHE_KEY);
+        List<PostSummaryResponse> postList = null;
+
+        try {
+            postList = (List<PostSummaryResponse>) redisTemplate.opsForValue().get(TOP10_CACHE_KEY);
+        } catch (RedisConnectionFailureException | RedisSystemException e) {
+            log.warn("Redis 조회 실패 - DB fallback. reason={}", e.getMessage());
+        }
 
         if (postList == null) {
             log.info("Top10 cache miss - querying DB");
             LocalDateTime startDate = LocalDateTime.now().minusMonths(2);
             postList = postRepository.findTop10Post(startDate, PageRequest.of(0, 10));
-            redisTemplate.opsForValue().set(TOP10_CACHE_KEY, postList, TOP10_CACHE_TTL);
+
+            try {
+                redisTemplate.opsForValue().set(TOP10_CACHE_KEY, postList, TOP10_CACHE_TTL);
+            } catch (RedisConnectionFailureException | RedisSystemException e) {
+                log.warn("Redis 저장 실패 - 다음 요청에서 재시도. reason={}", e.getMessage());
+            }
         }
 
         return getPostListAndNextCursorResponse(11, postList);
