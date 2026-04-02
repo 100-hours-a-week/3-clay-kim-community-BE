@@ -34,8 +34,14 @@ public class CorsFilter extends OncePerRequestFilter {
         String origin = request.getHeader("Origin");
         log.debug("[CorsFilter] Origin: {}, Method: {}, URI: {}", origin, request.getMethod(), uri);
 
+        // Origin이 없는 요청은 브라우저가 아닌 요청(서버 간 호출, 헬스체크, CLI 등)이므로 CORS 체크 스킵
+        if (origin == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // origin이 허용 목록에 있으면 해당 origin을 설정
-        if (origin != null && corsProperties.getAllowedOrigins().contains(origin)) {
+        if (corsProperties.getAllowedOrigins().contains(origin)) {
             response.setHeader("Access-Control-Allow-Origin", origin);
             response.setHeader("Access-Control-Allow-Credentials", "true");
             response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
@@ -47,7 +53,7 @@ public class CorsFilter extends OncePerRequestFilter {
 
             log.debug("[CorsFilter] CORS headers added for origin: {}", origin);
         } else {
-            log.warn("[CorsFilter] Origin not allowed or missing: {}", origin);
+            log.warn("[CorsFilter] Origin not allowed: {}", origin);
         }
 
         // OPTIONS 요청은 여기서 바로 응답
