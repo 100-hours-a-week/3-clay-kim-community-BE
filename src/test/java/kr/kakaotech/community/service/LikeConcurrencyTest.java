@@ -14,6 +14,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -52,32 +54,38 @@ class LikeConcurrencyTest {
     @Autowired PostRepository postRepository;
     @Autowired PostStatusRepository postStatusRepository;
     @Autowired LikeRepository likeRepository;
+    @Autowired PlatformTransactionManager txManager;
 
     private UUID userId;
     private int postId;
 
     @BeforeEach
     void setUp() {
-        User user = new User("like-test@example.com", "password", "likeTester", "USER");
-        userRepository.save(user);
-        userId = user.getId();
+        // setUp 전체를 하나의 트랜잭션으로 묶어야 @MapsId 관계가 managed 상태에서 persist된다.
+        // (repository.save()를 연달아 호출하면 각각 별도 트랜잭션이 되어 detached 참조 문제 발생)
+        TransactionTemplate tx = new TransactionTemplate(txManager);
+        tx.executeWithoutResult(s -> {
+            User user = new User("like-test@example.com", "password", "likeTester", "USER");
+            userRepository.save(user);
+            userId = user.getId();
 
-        Post post = new Post(
-                "동시성 테스트 게시글",
-                "content",
-                PostType.IN_PROGRESS,
-                user.getNickname(),
-                LocalDateTime.now(),
-                false,
-                user
-        );
-        postRepository.save(post);
-        postId = post.getId();
+            Post post = new Post(
+                    "동시성 테스트 게시글",
+                    "content",
+                    PostType.IN_PROGRESS,
+                    user.getNickname(),
+                    LocalDateTime.now(),
+                    false,
+                    user
+            );
+            postRepository.save(post);
+            postId = post.getId();
 
-        PostStatus status = new PostStatus(post);
-        postStatusRepository.save(status);
+            PostStatus status = new PostStatus(post);
+            postStatusRepository.save(status);
+        });
 
-        // 초기 상태: 좋아요 1개 등록
+        // 초기 상태: 좋아요 1개 등록 (별도 트랜잭션)
         likeService.toggleLike(userId, postId);
     }
 
