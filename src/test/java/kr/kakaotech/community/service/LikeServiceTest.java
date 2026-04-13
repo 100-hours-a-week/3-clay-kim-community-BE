@@ -68,6 +68,7 @@ class LikeServiceTest {
             User userRef = mock(User.class);
             Post postRef = mock(Post.class);
 
+            given(postStatusRepository.findByIdForUpdate(postId)).willReturn(Optional.of(postStatus));
             given(likeRepository.findByUser_IdAndPost_Id(userId, postId)).willReturn(Optional.empty());
             given(userRepository.getReferenceById(userId)).willReturn(userRef);
             given(postRepository.getReferenceById(postId)).willReturn(postRef);
@@ -94,6 +95,7 @@ class LikeServiceTest {
             // given
             PostLike existingLike = mock(PostLike.class);
 
+            given(postStatusRepository.findByIdForUpdate(postId)).willReturn(Optional.of(postStatus));
             given(likeRepository.findByUser_IdAndPost_Id(userId, postId)).willReturn(Optional.of(existingLike));
             // getLikeCount 내부 호출
             ReflectionTestUtils.setField(postStatus, "likeCount", 0);
@@ -118,6 +120,7 @@ class LikeServiceTest {
             User userRef = mock(User.class);
             Post postRef = mock(Post.class);
 
+            given(postStatusRepository.findByIdForUpdate(postId)).willReturn(Optional.of(postStatus));
             given(likeRepository.findByUser_IdAndPost_Id(userId, postId)).willReturn(Optional.empty());
             given(userRepository.getReferenceById(userId)).willReturn(userRef);
             given(postRepository.getReferenceById(postId)).willReturn(postRef);
