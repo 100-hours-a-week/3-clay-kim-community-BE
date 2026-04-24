@@ -127,6 +127,10 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
         // requestURI는 /api/... 로 유지하고 servlet dispatch는 /posts 경로로 되도록 contextPath 사용.
         // 인증 필요한 엔드포인트 대비 JWT 쿠키도 항상 동봉.
         MvcResult result = mockMvc.perform(get("/api" + url).contextPath("/api").cookie(authCookie)).andReturn();
+        assertThat(result.getResponse().getStatus())
+                .as(url + " 응답 status는 2xx여야 한다")
+                .isBetween(200, 299);
+
         String header = result.getResponse().getHeader(NPlusOneTestSupport.QUERY_COUNT_HEADER);
         assertThat(header)
                 .as("테스트 필터가 X-Query-Count 헤더를 설정해야 한다")
