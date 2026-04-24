@@ -58,6 +58,7 @@ public class JWTAuthService implements AuthService {
 
         // 기존 리프레시 토큰 무효화
         refreshTokenRepository.deleteByUserId(user.getId());
+        refreshTokenRepository.flush();
 
         // 토큰 발급 및 저장
         TokenResponse tokenResponse = generateAndSaveToken(user);
@@ -116,6 +117,7 @@ public class JWTAuthService implements AuthService {
 
         // 해당 유저에 대한 모든 토큰 삭제
         refreshTokenRepository.deleteByUserId(UUID.fromString(userId));
+        refreshTokenRepository.flush();
 
         // 쿠키 재발급(Access + Refresh, Refresh DB 등록)
         User user = userRepository.findById(UUID.fromString(userId)).get();

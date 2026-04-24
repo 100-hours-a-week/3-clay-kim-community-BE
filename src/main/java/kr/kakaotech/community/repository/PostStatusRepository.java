@@ -20,7 +20,7 @@ public interface PostStatusRepository extends JpaRepository<PostStatus, Integer>
     @Query("SELECT p FROM post_statuses p WHERE p.postId = :id")
     Optional<PostStatus> findByIdForUpdate(@Param("id") int id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         UPDATE post_statuses
         SET view_count = view_count + 1
@@ -28,7 +28,7 @@ public interface PostStatusRepository extends JpaRepository<PostStatus, Integer>
     """, nativeQuery = true)
     void incrementViewCount(@Param("id") int id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         UPDATE post_statuses
         SET like_count = like_count + 1
@@ -36,7 +36,7 @@ public interface PostStatusRepository extends JpaRepository<PostStatus, Integer>
     """, nativeQuery = true)
     void incrementLikeCount(@Param("id") int id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         UPDATE post_statuses
         SET like_count = like_count - 1
@@ -44,7 +44,7 @@ public interface PostStatusRepository extends JpaRepository<PostStatus, Integer>
     """, nativeQuery = true)
     void decrementLikeCount(@Param("id") int id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         UPDATE post_statuses
         SET comment_count = comment_count + 1
@@ -52,7 +52,7 @@ public interface PostStatusRepository extends JpaRepository<PostStatus, Integer>
     """, nativeQuery = true)
     void incrementCommentCount(@Param("id") int id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         UPDATE post_statuses
         SET comment_count = GREATEST(comment_count - 1, 0)

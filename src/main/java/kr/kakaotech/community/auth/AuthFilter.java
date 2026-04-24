@@ -84,7 +84,7 @@ public class AuthFilter extends OncePerRequestFilter {
                 authExceptionHandler(response, new CustomException(ErrorCode.EXPIRED_ACCESS_TOKEN));
                 return;
             } else {
-                if (requestURI.matches(LIKE_URL)) {
+                if ("GET".equals(request.getMethod()) && requestURI.matches(LIKE_URL)) {
                     filterChain.doFilter(request, response);
                     return;
                 }

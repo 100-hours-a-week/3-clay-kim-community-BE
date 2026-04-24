@@ -10,6 +10,8 @@ import kr.kakaotech.community.dto.request.UserPasswordRequest;
 import kr.kakaotech.community.dto.request.UserRegisterRequest;
 import kr.kakaotech.community.dto.request.UserUpdateRequest;
 import kr.kakaotech.community.dto.response.UserDetailResponse;
+import kr.kakaotech.community.exception.CustomException;
+import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.service.AuthService;
 import kr.kakaotech.community.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +67,10 @@ public class UserController {
                                                                       @Valid @ModelAttribute UserUpdateRequest userUpdateRequest,
                                                                       @RequestPart(value = "profileImage", required = false) MultipartFile image,
                                                                       HttpServletRequest request) {
+        if (!userId.equals(request.getAttribute("userId").toString())) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
         UserDetailResponse userDetailResponse = userService.updateUser(userId, userUpdateRequest, image);
 
         ApiResponse<UserDetailResponse> apiResponse = new ApiResponse<>("업데이트 성공", userDetailResponse);
