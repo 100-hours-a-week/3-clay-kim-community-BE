@@ -76,9 +76,10 @@ class LikeConcurrencyTest {
     void setUp() {
         // setUp 전체를 하나의 트랜잭션으로 묶어야 @MapsId 관계가 managed 상태에서 persist된다.
         // (repository.save()를 연달아 호출하면 각각 별도 트랜잭션이 되어 detached 참조 문제 발생)
+        String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         TransactionTemplate tx = new TransactionTemplate(txManager);
         tx.executeWithoutResult(s -> {
-            User user = new User("like-test@example.com", "password", "likeTester", "USER");
+            User user = new User("like-test-" + suffix + "@example.com", "password", "lk_" + suffix, "USER");
             userRepository.save(user);
             userId = user.getId();
 
@@ -104,10 +105,17 @@ class LikeConcurrencyTest {
 
     @AfterEach
     void tearDown() {
-        likeRepository.deleteAll();
-        postStatusRepository.deleteAll();
-        postRepository.deleteAll();
-        userRepository.deleteAll();
+        TransactionTemplate tx = new TransactionTemplate(txManager);
+        tx.executeWithoutResult(s -> {
+            likeRepository.findByUser_IdAndPost_Id(userId, postId)
+                    .ifPresent(likeRepository::delete);
+            postStatusRepository.findById(postId)
+                    .ifPresent(postStatusRepository::delete);
+            postRepository.findById(postId)
+                    .ifPresent(postRepository::delete);
+            userRepository.findById(userId)
+                    .ifPresent(userRepository::delete);
+        });
     }
 
     @Test
@@ -151,8 +159,19 @@ class LikeConcurrencyTest {
         }
 
         startLatch.countDown(); // 모든 스레드 동시 출발
-        doneLatch.await(30, TimeUnit.SECONDS);
+        boolean allDone = doneLatch.await(30, TimeUnit.SECONDS);
         executor.shutdown();
+        boolean executorTerminated = executor.awaitTermination(5, TimeUnit.SECONDS);
+        if (!executorTerminated) {
+            executor.shutdownNow();
+        }
+
+        assertThat(allDone)
+                .as("모든 스레드는 제한 시간 안에 완료되어야 한다")
+                .isTrue();
+        assertThat(executorTerminated)
+                .as("테스트 종료 전 스레드 풀은 정상 종료되어야 한다")
+                .isTrue();
 
         // then: like_count와 실제 post_likes row 수가 일치해야 한다
         int actualRows = likeRepository.countByPost_Id(postId);

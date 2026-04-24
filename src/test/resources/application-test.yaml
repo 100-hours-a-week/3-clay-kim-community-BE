@@ -4,6 +4,8 @@ server:
 
 spring:
   datasource:
+    # Local/CI integration tests use an isolated Docker Compose MySQL instance on the same host.
+    # SSL is intentionally disabled and public key retrieval enabled for this disposable test-only DB.
     url: jdbc:mysql://localhost:3306/community?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: root
