@@ -60,6 +60,9 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
     private static final int COMMENT_SEED_COUNT = 5;
 
     private int targetPostId;
+    private UUID authorId;
+    private String authorEmail;
+    private String authorNickname;
 
     @BeforeEach
     void seed() {
@@ -74,7 +77,11 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
                 "np1_" + suffix,
                 "USER"
         );
+        author.addImage(new Image("https://example.com/author-" + suffix + ".png"));
         userRepository.saveAndFlush(author);
+        authorId = author.getId();
+        authorEmail = author.getEmail();
+        authorNickname = author.getNickname();
 
         String accessToken = jwtProvider.createAccess(author.getId().toString(), "USER");
         authCookie = new Cookie("accessToken", accessToken);
@@ -140,6 +147,26 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
     }
 
     @Test
+    @DisplayName("GET /posts?period=daily — 기간별 인기글 목록은 최대 2 쿼리")
+    void getLikePostList_nPlusOne() throws Exception {
+        int count = callAndGetQueryCount("/posts?period=daily&size=5");
+
+        assertThat(count)
+                .as("기간별 projection 쿼리 단일 실행 기대")
+                .isLessThanOrEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("GET /posts?nickname=... — 작성자별 게시글 목록은 최대 2 쿼리")
+    void getNicknamePostList_nPlusOne() throws Exception {
+        int count = callAndGetQueryCount("/posts?nickname=" + authorNickname + "&size=5");
+
+        assertThat(count)
+                .as("작성자별 projection 쿼리 단일 실행 기대")
+                .isLessThanOrEqualTo(2);
+    }
+
+    @Test
     @DisplayName("GET /users — 회원 목록 조회는 프로필 이미지 수와 무관하게 최대 3 쿼리")
     void getUserList_nPlusOne() throws Exception {
         // UserDetailResponse가 imageUrl을 읽으므로 프로필 이미지가 있는 유저를 여러 명 seed한다.
@@ -155,6 +182,36 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
         assertThat(count)
                 .as("회원 수만큼 프로필 이미지 조회가 추가되면 안 됨")
                 .isLessThanOrEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("GET /users/{id} — 회원 상세 조회는 최대 2 쿼리")
+    void getUserDetail_nPlusOne() throws Exception {
+        int count = callAndGetQueryCount("/users/" + authorId);
+
+        assertThat(count)
+                .as("단일 회원 상세 조회는 고정 쿼리 수여야 함")
+                .isLessThanOrEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("GET /users/email — 이메일 중복 확인은 최대 1 쿼리")
+    void checkUserEmail_nPlusOne() throws Exception {
+        int count = callAndGetQueryCount("/users/email?email=" + authorEmail);
+
+        assertThat(count)
+                .as("이메일 exists 쿼리 단일 실행 기대")
+                .isLessThanOrEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("GET /users/nickname — 닉네임 중복 확인은 최대 1 쿼리")
+    void checkUserNickname_nPlusOne() throws Exception {
+        int count = callAndGetQueryCount("/users/nickname?nickname=" + authorNickname);
+
+        assertThat(count)
+                .as("닉네임 exists 쿼리 단일 실행 기대")
+                .isLessThanOrEqualTo(1);
     }
 
     @Test
@@ -195,6 +252,36 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
         assertThat(count)
                 .as("findById 단일 쿼리 기대")
                 .isLessThanOrEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("GET /posts/{id}/likes — 좋아요 상태 조회는 최대 2 쿼리")
+    void getPostLikeStatus_nPlusOne() throws Exception {
+        int count = callAndGetQueryCount("/posts/" + targetPostId + "/likes");
+
+        assertThat(count)
+                .as("좋아요 여부와 카운트 조회는 고정 쿼리 수여야 함")
+                .isLessThanOrEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("GET /posts/type — 게시글 타입별 카운트는 최대 1 쿼리")
+    void getPostTypeCount_nPlusOne() throws Exception {
+        int count = callAndGetQueryCount("/posts/type?type=COMPLETED");
+
+        assertThat(count)
+                .as("게시글 타입 count 쿼리 단일 실행 기대")
+                .isLessThanOrEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("GET /images/status — 이미지 수 조회는 최대 1 쿼리")
+    void getImageStatus_nPlusOne() throws Exception {
+        int count = callAndGetQueryCount("/images/status");
+
+        assertThat(count)
+                .as("이미지 count 쿼리 단일 실행 기대")
+                .isLessThanOrEqualTo(1);
     }
 
     @Test
