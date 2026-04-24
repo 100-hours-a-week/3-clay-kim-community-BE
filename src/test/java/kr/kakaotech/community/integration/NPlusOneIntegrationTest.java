@@ -5,6 +5,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.Cookie;
 import kr.kakaotech.community.auth.jwt.JwtProvider;
 import kr.kakaotech.community.entity.Comment;
+import kr.kakaotech.community.entity.Image;
 import kr.kakaotech.community.entity.Post;
 import kr.kakaotech.community.entity.PostStatus;
 import kr.kakaotech.community.entity.PostType;
@@ -136,6 +137,24 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
         assertThat(count)
                 .as("projection 쿼리 단일 실행 기대. 초과 시 N+1 의심")
                 .isLessThanOrEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("GET /users — 회원 목록 조회는 프로필 이미지 수와 무관하게 최대 3 쿼리")
+    void getUserList_nPlusOne() throws Exception {
+        // UserDetailResponse가 imageUrl을 읽으므로 프로필 이미지가 있는 유저를 여러 명 seed한다.
+        for (int i = 0; i < 5; i++) {
+            String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+            User user = new User("u-" + suffix + "@test.com", "pw", "u_" + suffix, "USER");
+            user.addImage(new Image("https://example.com/" + suffix + ".png"));
+            userRepository.saveAndFlush(user);
+        }
+
+        int count = callAndGetQueryCount("/users?size=5");
+
+        assertThat(count)
+                .as("회원 수만큼 프로필 이미지 조회가 추가되면 안 됨")
+                .isLessThanOrEqualTo(3);
     }
 
     @Test
