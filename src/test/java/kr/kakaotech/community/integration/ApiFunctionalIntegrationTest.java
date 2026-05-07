@@ -45,7 +45,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "jwt.expirationtime.accessTtl=1800",
+        "jwt.expirationtime.refreshTtl=604800",
+        "jwt.secret=test-only-no-sensitive-secret-for-integration-test"
+})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
