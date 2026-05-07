@@ -74,7 +74,8 @@ dependencies {
 
 }
 
-test {
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
     testLogging {
         events "passed", "skipped", "failed"
         showStandardStreams = true
@@ -82,8 +83,21 @@ test {
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags 'nplusone'
+    }
     finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.register('nPlusOneTest', Test) {
+    description = 'Runs N+1 integration tests that require local MySQL/Redis.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    useJUnitPlatform {
+        includeTags 'nplusone'
+    }
 }
 
 jacoco {

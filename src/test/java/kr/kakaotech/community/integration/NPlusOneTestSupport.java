@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.kakaotech.community.global.monitoring.QueryCountHolder;
+import org.junit.jupiter.api.Tag;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -28,7 +29,8 @@ import java.io.IOException;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@ActiveProfiles("nplusone")
+@Tag("nplusone")
 @Import(NPlusOneTestSupport.QueryCountCaptureConfig.class)
 public abstract class NPlusOneTestSupport {
 
