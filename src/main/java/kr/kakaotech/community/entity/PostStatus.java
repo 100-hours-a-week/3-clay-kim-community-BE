@@ -8,6 +8,9 @@ import org.hibernate.annotations.ColumnDefault;
 @Getter
 @NoArgsConstructor
 @Entity(name = "post_statuses")
+@Table(name = "post_statuses", indexes = {
+        @Index(name = "idx_post_statuses_like_count_post_id", columnList = "like_count DESC, post_id DESC")
+})
 public class PostStatus {
     @Id
     private Integer postId;

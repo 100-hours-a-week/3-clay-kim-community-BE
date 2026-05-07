@@ -18,7 +18,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,13 +49,11 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
     @Autowired PostRepository postRepository;
     @Autowired PostStatusRepository postStatusRepository;
     @Autowired CommentRepository commentRepository;
-    @Autowired RedisTemplate<String, Object> redisTemplate;
     @Autowired JwtProvider jwtProvider;
     @PersistenceContext EntityManager em;
 
     private Cookie authCookie;
 
-    private static final String TOP10_CACHE_KEY = "posts:top10";
     private static final int COMMENT_SEED_COUNT = 5;
 
     private int targetPostId;
@@ -66,9 +63,6 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
 
     @BeforeEach
     void seed() {
-        // Top10 캐시 flush (미스 경로 보장)
-        redisTemplate.delete(TOP10_CACHE_KEY);
-
         // 닉네임은 12자 제한, UUID 앞 8자 사용 ("np1_" + 8자 = 12자)
         String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         User author = new User(
@@ -219,12 +213,12 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
     }
 
     @Test
-    @DisplayName("GET /posts/top10 — 인기글 조회(캐시 미스)는 최대 2 쿼리")
+    @DisplayName("GET /posts/top10 — 인기글 조회는 최대 2 쿼리")
     void getPostTop10_nPlusOne() throws Exception {
         int count = callAndGetQueryCount("/posts/top10");
 
         assertThat(count)
-                .as("Redis 캐시 미스 시에도 단일 projection 쿼리로 충분해야 함")
+                .as("Top10 조회는 단일 projection 쿼리로 충분해야 함")
                 .isLessThanOrEqualTo(2);
     }
 

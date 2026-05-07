@@ -13,14 +13,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.RedisConnectionFailureException;
-import org.springframework.data.redis.RedisSystemException;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -34,13 +30,9 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostStatusRepository postStatusRepository;
     private final ImageService imageService;
-    private final RedisTemplate<String, Object> redisTemplate;
 
     private final int IMAGE_LIMIT_COUNT = 5;
     private final PostStatusService postStatusService;
-
-    private static final String TOP10_CACHE_KEY = "posts:top10";
-    private static final Duration TOP10_CACHE_TTL = Duration.ofMinutes(5);
 
     /**
      * Post 등록
@@ -160,31 +152,11 @@ public class PostService {
     }
 
     /**
-     * TOP 10 좋아요 순서 정렬 (Redis cache-aside)
+     * TOP 10 좋아요 순서 정렬
      */
     @Transactional(readOnly = true)
-    @SuppressWarnings("unchecked")
     public PostListResponse getPostTop10List() {
-        List<PostSummaryResponse> postList = null;
-
-        try {
-            postList = (List<PostSummaryResponse>) redisTemplate.opsForValue().get(TOP10_CACHE_KEY);
-        } catch (RedisConnectionFailureException | RedisSystemException e) {
-            log.warn("Redis 조회 실패 - DB fallback. reason={}", e.getMessage());
-        }
-
-        if (postList == null) {
-            log.info("Top10 cache miss - querying DB");
-            LocalDateTime startDate = LocalDateTime.now().minusMonths(2);
-            postList = postRepository.findTop10Post(startDate, PageRequest.of(0, 10));
-
-            try {
-                redisTemplate.opsForValue().set(TOP10_CACHE_KEY, postList, TOP10_CACHE_TTL);
-            } catch (RedisConnectionFailureException | RedisSystemException e) {
-                log.warn("Redis 저장 실패 - 다음 요청에서 재시도. reason={}", e.getMessage());
-            }
-        }
-
+        List<PostSummaryResponse> postList = postRepository.findTop10Post(PageRequest.of(0, 10));
         return getPostListAndNextCursorResponse(11, postList);
     }
 

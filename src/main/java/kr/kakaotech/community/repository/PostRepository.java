@@ -62,16 +62,15 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
                             p.id, p.title, p.nickname, p.createdAt,
                             ps.likeCount, ps.commentCount, ps.viewCount, ui.url, p.type
                 )
-                from posts p
-                join post_statuses ps on ps.post = p
-                join users u on p.user = u
+                from post_statuses ps
+                join ps.post p
+                join p.user u
                 left join u.image ui
                 where p.deleted = false
                 AND p.type = 'completed'
-                AND p.createdAt >= :startDate
-                order by ps.likeCount desc
+                order by ps.likeCount desc, ps.postId desc
             """)
-    List<PostSummaryResponse> findTop10Post(@Param("startDate") LocalDateTime startDate, Pageable pageable);
+    List<PostSummaryResponse> findTop10Post(Pageable pageable);
 
     @Query("""
                 SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(

@@ -22,10 +22,7 @@ class PostRepositoryQueryTest {
     @DisplayName("Top10 쿼리 - 기간 제한 없이 전체 조회 (before)")
     void top10_noDateFilter() {
         long start = System.currentTimeMillis();
-        List<PostSummaryResponse> result = postRepository.findTop10Post(
-                LocalDateTime.of(2000, 1, 1, 0, 0), // 사실상 전체
-                PageRequest.of(0, 10)
-        );
+        List<PostSummaryResponse> result = postRepository.findTop10Post(PageRequest.of(0, 10));
         long elapsed = System.currentTimeMillis() - start;
 
         System.out.println("=== [전체 조회] 결과 수: " + result.size() + ", 소요 시간: " + elapsed + "ms ===");
@@ -35,10 +32,7 @@ class PostRepositoryQueryTest {
     @DisplayName("Top10 쿼리 - 최근 2개월 (after)")
     void top10_with2MonthFilter() {
         long start = System.currentTimeMillis();
-        List<PostSummaryResponse> result = postRepository.findTop10Post(
-                LocalDateTime.now().minusMonths(2),
-                PageRequest.of(0, 10)
-        );
+        List<PostSummaryResponse> result = postRepository.findTop10Post(PageRequest.of(0, 10));
         long elapsed = System.currentTimeMillis() - start;
 
         System.out.println("=== [2개월 제한] 결과 수: " + result.size() + ", 소요 시간: " + elapsed + "ms ===");
@@ -48,10 +42,7 @@ class PostRepositoryQueryTest {
     @DisplayName("Top10 쿼리 - 최근 1주일")
     void top10_with1WeekFilter() {
         long start = System.currentTimeMillis();
-        List<PostSummaryResponse> result = postRepository.findTop10Post(
-                LocalDateTime.now().minusWeeks(1),
-                PageRequest.of(0, 10)
-        );
+        List<PostSummaryResponse> result = postRepository.findTop10Post(PageRequest.of(0, 10));
         long elapsed = System.currentTimeMillis() - start;
 
         System.out.println("=== [1주일 제한] 결과 수: " + result.size() + ", 소요 시간: " + elapsed + "ms ===");
