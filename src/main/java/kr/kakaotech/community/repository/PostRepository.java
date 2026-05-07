@@ -84,6 +84,24 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
                             p.id, p.title, p.nickname, p.createdAt,
                             ps.likeCount, ps.commentCount, ps.viewCount, ui.url, p.type
                 )
+                FROM posts p
+                JOIN post_statuses ps ON ps.post = p
+                JOIN users u ON p.user = u
+                LEFT JOIN u.image ui
+                WHERE p.deleted = false
+                AND p.type = :type
+                AND p.id IN :postIds
+            """)
+    List<PostSummaryResponse> findPostSummariesByIds(
+            @Param("postIds") List<Integer> postIds,
+            @Param("type") PostType type
+    );
+
+    @Query("""
+                SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
+                            p.id, p.title, p.nickname, p.createdAt,
+                            ps.likeCount, ps.commentCount, ps.viewCount, ui.url, p.type
+                )
                 from posts p
                 join post_statuses ps on ps.post = p
                 join users u on p.user = u

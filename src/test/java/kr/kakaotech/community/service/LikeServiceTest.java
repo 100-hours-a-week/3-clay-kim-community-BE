@@ -39,6 +39,8 @@ class LikeServiceTest {
     PostRepository postRepository;
     @Mock
     PostStatusRepository postStatusRepository;
+    @Mock
+    Top10RankingService top10RankingService;
 
     @InjectMocks
     LikeService likeService;
@@ -86,6 +88,7 @@ class LikeServiceTest {
 
             verify(likeRepository).save(any(PostLike.class));
             verify(postStatusRepository).incrementLikeCount(postId);
+            verify(top10RankingService).syncScore(postId, 1);
             verify(likeRepository, never()).delete(any());
         }
 
@@ -110,6 +113,7 @@ class LikeServiceTest {
 
             verify(likeRepository).delete(existingLike);
             verify(postStatusRepository).decrementLikeCount(postId);
+            verify(top10RankingService).syncScore(postId, 0);
             verify(likeRepository, never()).save(any());
         }
 
@@ -132,6 +136,7 @@ class LikeServiceTest {
                     .isInstanceOf(CustomException.class)
                     .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                             .isEqualTo(ErrorCode.NOT_FOUND_POST));
+            verify(top10RankingService, never()).syncScore(anyInt(), anyInt());
         }
     }
 

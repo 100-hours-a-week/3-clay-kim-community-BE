@@ -15,12 +15,18 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,6 +40,7 @@ public class PostService {
 
     private final int IMAGE_LIMIT_COUNT = 5;
     private final PostStatusService postStatusService;
+    private final Top10RankingService top10RankingService;
 
     /**
      * Post 등록
@@ -157,10 +164,37 @@ public class PostService {
      */
     @Transactional(readOnly = true)
     public PostListResponse getPostTop10List() {
+        List<Integer> rankedPostIds = top10RankingService.getTop10PostIds();
+
+        if (!rankedPostIds.isEmpty()) {
+            List<PostSummaryResponse> postList = sortByRank(
+                    rankedPostIds,
+                    postRepository.findPostSummariesByIds(rankedPostIds, PostType.COMPLETED)
+            );
+
+            if (postList.size() == 10) {
+                return getPostListAndNextCursorResponse(11, postList);
+            }
+
+            log.info("Top10 Sorted Set miss or stale members - DB fallback. redisIds={}, found={}",
+                    rankedPostIds.size(), postList.size());
+        }
+
         List<PostSummaryResponse> postList = postRepository.findTop10PostRowsByLikeCountIndex().stream()
                 .map(this::toPostSummaryResponse)
                 .toList();
+        top10RankingService.seed(postList);
         return getPostListAndNextCursorResponse(11, postList);
+    }
+
+    private List<PostSummaryResponse> sortByRank(List<Integer> rankedPostIds, List<PostSummaryResponse> posts) {
+        Map<Integer, PostSummaryResponse> postsById = posts.stream()
+                .collect(Collectors.toMap(PostSummaryResponse::getId, Function.identity()));
+
+        return rankedPostIds.stream()
+                .map(postsById::get)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     private PostSummaryResponse toPostSummaryResponse(Object[] row) {
@@ -232,6 +266,21 @@ public class PostService {
         }
 
         post.deletePost();
+        removeTop10AfterCommit(postId);
+    }
+
+    private void removeTop10AfterCommit(int postId) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            top10RankingService.remove(postId);
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                top10RankingService.remove(postId);
+            }
+        });
     }
 
     /**

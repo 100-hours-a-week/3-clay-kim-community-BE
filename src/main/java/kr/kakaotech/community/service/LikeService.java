@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +30,7 @@ public class LikeService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final PostStatusRepository postStatusRepository;
+    private final Top10RankingService top10RankingService;
 
     @Transactional
     public LikeResponse toggleLike(UUID userId, int postId) {
@@ -43,7 +46,10 @@ public class LikeService {
             likeRepository.delete(optionalPostLike.get());
             postStatusRepository.decrementLikeCount(postId);
 
-            return new LikeResponse(false, getLikeCount(postId));
+            int likeCount = getLikeCount(postId);
+            syncTop10ScoreAfterCommit(postId, likeCount);
+
+            return new LikeResponse(false, likeCount);
         }
 
         // 좋아요 등록
@@ -58,7 +64,10 @@ public class LikeService {
 
             postStatusRepository.incrementLikeCount(postId);
 
-            return new LikeResponse(true, getLikeCount(postId));
+            int likeCount = getLikeCount(postId);
+            syncTop10ScoreAfterCommit(postId, likeCount);
+
+            return new LikeResponse(true, likeCount);
 
         } catch (DataIntegrityViolationException e) {
             // FK 제약조건 위반
@@ -84,5 +93,19 @@ public class LikeService {
     @Transactional(readOnly = true)
     public int getLikeCount(int postId) {
         return postStatusRepository.findById(postId).get().getLikeCount();
+    }
+
+    private void syncTop10ScoreAfterCommit(int postId, int likeCount) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            top10RankingService.syncScore(postId, likeCount);
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                top10RankingService.syncScore(postId, likeCount);
+            }
+        });
     }
 }

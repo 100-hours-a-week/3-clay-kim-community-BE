@@ -45,6 +45,8 @@ class PostServiceTest {
     @Mock
     PostStatusService postStatusService;
     @Mock
+    Top10RankingService top10RankingService;
+    @Mock
     org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
     @Mock
     org.springframework.data.redis.core.ValueOperations<String, Object> valueOperations;
@@ -377,6 +379,7 @@ class PostServiceTest {
             List<PostSummaryResponse> posts = List.of(
                     createSummary(1), createSummary(2), createSummary(3)
             );
+            given(top10RankingService.getTop10PostIds()).willReturn(List.of());
             given(postRepository.findTop10PostRowsByLikeCountIndex()).willReturn(
                     posts.stream()
                             .map(PostServiceTest.this::createTop10Row)
@@ -389,6 +392,32 @@ class PostServiceTest {
             // then
             assertThat(response.getPosts()).hasSize(3);
             assertThat(response.isHasNext()).isFalse();
+            verify(top10RankingService).seed(anyList());
+        }
+
+        @Test
+        @DisplayName("성공 - Redis Sorted Set 순서대로 조회")
+        void success_sortedSet() {
+            // given
+            List<Integer> rankedPostIds = List.of(10, 9, 8, 7, 6, 5, 4, 3, 2, 1);
+            List<PostSummaryResponse> posts = List.of(
+                    createSummary(1), createSummary(3), createSummary(5), createSummary(7), createSummary(9),
+                    createSummary(2), createSummary(4), createSummary(6), createSummary(8), createSummary(10)
+            );
+
+            given(top10RankingService.getTop10PostIds()).willReturn(rankedPostIds);
+            given(postRepository.findPostSummariesByIds(rankedPostIds, PostType.COMPLETED)).willReturn(posts);
+
+            // when
+            PostListResponse response = postService.getPostTop10List();
+
+            // then
+            assertThat(response.getPosts())
+                    .extracting(PostSummaryResponse::getId)
+                    .containsExactly(10, 9, 8, 7, 6, 5, 4, 3, 2, 1);
+            verify(postRepository).findPostSummariesByIds(rankedPostIds, PostType.COMPLETED);
+            verify(postRepository, never()).findTop10PostRowsByLikeCountIndex();
+            verify(top10RankingService, never()).seed(anyList());
         }
     }
 
