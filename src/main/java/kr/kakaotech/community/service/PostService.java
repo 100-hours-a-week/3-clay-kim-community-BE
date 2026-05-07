@@ -227,6 +227,9 @@ public class PostService {
         if (post.getDeleted()) {
             throw new CustomException(ErrorCode.NOT_FOUND_POST);
         }
+        if (!post.getUser().getId().toString().equals(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
 
         post.deletePost();
     }

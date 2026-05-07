@@ -31,6 +31,11 @@ public class LikeService {
 
     @Transactional
     public LikeResponse toggleLike(UUID userId, int postId) {
+        // PostStatus 행에 PESSIMISTIC_WRITE 락을 획득해 같은 게시글에 대한 동시 토글을 직렬화한다.
+        // 가용성 문제(StaleObjectStateException 다발) 해결이 목적.
+        postStatusRepository.findByIdForUpdate(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+
         Optional<PostLike> optionalPostLike = likeRepository.findByUser_IdAndPost_Id(userId, postId);
 
         // 좋아요 취소
