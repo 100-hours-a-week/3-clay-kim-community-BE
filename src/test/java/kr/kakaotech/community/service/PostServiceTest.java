@@ -377,7 +377,11 @@ class PostServiceTest {
             List<PostSummaryResponse> posts = List.of(
                     createSummary(1), createSummary(2), createSummary(3)
             );
-            given(postRepository.findTop10Post(any())).willReturn(posts);
+            given(postRepository.findTop10PostRowsByLikeCountIndex()).willReturn(
+                    posts.stream()
+                            .map(PostServiceTest.this::createTop10Row)
+                            .toList()
+            );
 
             // when
             PostListResponse response = postService.getPostTop10List();
@@ -386,6 +390,20 @@ class PostServiceTest {
             assertThat(response.getPosts()).hasSize(3);
             assertThat(response.isHasNext()).isFalse();
         }
+    }
+
+    private Object[] createTop10Row(PostSummaryResponse post) {
+        return new Object[]{
+                post.getId(),
+                post.getTitle(),
+                post.getNickname(),
+                post.getCreatedAt(),
+                post.getPostType().name(),
+                post.getLikeCount(),
+                post.getCommentCount(),
+                post.getViewCount(),
+                post.getImageUrl()
+        };
     }
 
     @Nested

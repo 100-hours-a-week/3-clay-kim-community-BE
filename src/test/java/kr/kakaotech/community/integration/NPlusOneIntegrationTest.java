@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,11 +51,13 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
     @Autowired PostStatusRepository postStatusRepository;
     @Autowired CommentRepository commentRepository;
     @Autowired JwtProvider jwtProvider;
+    @Autowired JdbcTemplate jdbcTemplate;
     @PersistenceContext EntityManager em;
 
     private Cookie authCookie;
 
     private static final int COMMENT_SEED_COUNT = 5;
+    private static boolean top10IndexReady = false;
 
     private int targetPostId;
     private UUID authorId;
@@ -63,6 +66,8 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
 
     @BeforeEach
     void seed() {
+        ensureTop10Index();
+
         // 닉네임은 12자 제한, UUID 앞 8자 사용 ("np1_" + 8자 = 12자)
         String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         User author = new User(
@@ -108,6 +113,29 @@ class NPlusOneIntegrationTest extends NPlusOneTestSupport {
             userRepository.saveAndFlush(commenter);
             commentRepository.saveAndFlush(new Comment("댓글 " + i, commenter, targetPost));
         }
+    }
+
+    private void ensureTop10Index() {
+        if (top10IndexReady) {
+            return;
+        }
+
+        Integer indexCount = jdbcTemplate.queryForObject("""
+                SELECT COUNT(1)
+                FROM information_schema.statistics
+                WHERE table_schema = DATABASE()
+                AND table_name = 'post_statuses'
+                AND index_name = 'idx_post_statuses_like_count_post_id'
+                """, Integer.class);
+
+        if (indexCount == null || indexCount == 0) {
+            jdbcTemplate.execute("""
+                    CREATE INDEX idx_post_statuses_like_count_post_id
+                    ON post_statuses (like_count DESC, post_id DESC)
+                    """);
+        }
+
+        top10IndexReady = true;
     }
 
     private int callAndGetQueryCount(String url) throws Exception {

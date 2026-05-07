@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -156,8 +157,35 @@ public class PostService {
      */
     @Transactional(readOnly = true)
     public PostListResponse getPostTop10List() {
-        List<PostSummaryResponse> postList = postRepository.findTop10Post(PageRequest.of(0, 10));
+        List<PostSummaryResponse> postList = postRepository.findTop10PostRowsByLikeCountIndex().stream()
+                .map(this::toPostSummaryResponse)
+                .toList();
         return getPostListAndNextCursorResponse(11, postList);
+    }
+
+    private PostSummaryResponse toPostSummaryResponse(Object[] row) {
+        return new PostSummaryResponse(
+                toInt(row[0]),
+                (String) row[1],
+                (String) row[2],
+                toLocalDateTime(row[3]),
+                toInt(row[5]),
+                toInt(row[6]),
+                toInt(row[7]),
+                row[8] == null ? null : row[8].toString(),
+                PostType.valueOf(row[4].toString())
+        );
+    }
+
+    private int toInt(Object value) {
+        return ((Number) value).intValue();
+    }
+
+    private LocalDateTime toLocalDateTime(Object value) {
+        if (value instanceof Timestamp timestamp) {
+            return timestamp.toLocalDateTime();
+        }
+        return (LocalDateTime) value;
     }
 
     /**

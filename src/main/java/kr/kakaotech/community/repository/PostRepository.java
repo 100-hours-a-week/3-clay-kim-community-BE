@@ -57,20 +57,27 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
             """)
     List<PostSummaryResponse> findPostByLikeCount(@Param("startDate") LocalDateTime startDate, Pageable pageable);
 
-    @Query("""
-                SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
-                            p.id, p.title, p.nickname, p.createdAt,
-                            ps.likeCount, ps.commentCount, ps.viewCount, ui.url, p.type
-                )
-                from post_statuses ps
-                join ps.post p
-                join p.user u
-                left join u.image ui
-                where p.deleted = false
-                AND p.type = 'completed'
-                order by ps.likeCount desc, ps.postId desc
-            """)
-    List<PostSummaryResponse> findTop10Post(Pageable pageable);
+    @Query(value = """
+                SELECT
+                    p.id,
+                    p.title,
+                    p.nickname,
+                    p.created_at,
+                    p.type,
+                    ps.like_count,
+                    ps.comment_count,
+                    ps.view_count,
+                    ui.url
+                FROM post_statuses ps FORCE INDEX (idx_post_statuses_like_count_post_id)
+                STRAIGHT_JOIN posts p ON p.id = ps.post_id
+                JOIN users u ON p.user_id = u.id
+                LEFT JOIN images ui ON ui.id = u.image_id
+                WHERE p.deleted = false
+                AND p.type = 'COMPLETED'
+                ORDER BY ps.like_count DESC, ps.post_id DESC
+                LIMIT 10
+            """, nativeQuery = true)
+    List<Object[]> findTop10PostRowsByLikeCountIndex();
 
     @Query("""
                 SELECT new kr.kakaotech.community.dto.response.PostSummaryResponse(
