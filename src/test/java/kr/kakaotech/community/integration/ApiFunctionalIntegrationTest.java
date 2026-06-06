@@ -7,11 +7,14 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.Cookie;
 import kr.kakaotech.community.auth.jwt.JwtProvider;
 import kr.kakaotech.community.entity.Comment;
+import kr.kakaotech.community.entity.Course;
 import kr.kakaotech.community.entity.Post;
 import kr.kakaotech.community.entity.PostStatus;
 import kr.kakaotech.community.entity.PostType;
 import kr.kakaotech.community.entity.User;
 import kr.kakaotech.community.repository.CommentRepository;
+import kr.kakaotech.community.repository.CourseRepository;
+import kr.kakaotech.community.repository.CourseSubscriptionRepository;
 import kr.kakaotech.community.repository.LikeRepository;
 import kr.kakaotech.community.repository.PostRepository;
 import kr.kakaotech.community.repository.PostStatusRepository;
@@ -37,6 +40,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -61,6 +65,8 @@ class ApiFunctionalIntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired UserRepository userRepository;
+    @Autowired CourseRepository courseRepository;
+    @Autowired CourseSubscriptionRepository courseSubscriptionRepository;
     @Autowired PostRepository postRepository;
     @Autowired PostStatusRepository postStatusRepository;
     @Autowired CommentRepository commentRepository;
@@ -124,6 +130,92 @@ class ApiFunctionalIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("accessToken", 0))
                 .andExpect(cookie().maxAge("refreshToken", 0));
+    }
+
+    @Test
+    @DisplayName("GET /courses — 인증 없이 코스 목록을 조회한다")
+    void getCourses_success_withoutAuth() throws Exception {
+        Course course = saveCourse("한강종주");
+
+        mockMvc.perform(get("/api/courses")
+                        .contextPath("/api"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("코스 목록 조회 성공"))
+                .andExpect(jsonPath("$.data[0].id").value(course.getId()))
+                .andExpect(jsonPath("$.data[0].name").value(course.getName()))
+                .andExpect(jsonPath("$.data[0].currentStatus").value("NORMAL"));
+    }
+
+    @Test
+    @DisplayName("POST /courses/{courseId}/subscription — 중복 등록해도 구독은 1건만 유지된다")
+    void subscribeCourse_success_idempotent() throws Exception {
+        User user = saveUser("cs");
+        Course course = saveCourse("북한강종주");
+        Cookie cookie = accessCookie(user);
+
+        mockMvc.perform(post("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("코스 알림받기 등록 성공"));
+
+        mockMvc.perform(post("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("이미 알림받기 등록된 코스입니다."));
+
+        assertThat(courseSubscriptionRepository.countByUser_IdAndCourse_Id(user.getId(), course.getId()))
+                .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("GET /courses/subscriptions — 사용자의 코스 구독 목록을 조회한다")
+    void getSubscribedCourses_success() throws Exception {
+        User user = saveUser("gs");
+        Course course = saveCourse("새재자전거길");
+        Cookie cookie = accessCookie(user);
+
+        mockMvc.perform(post("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/courses/subscriptions")
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("코스 알림받기 목록 조회 성공"))
+                .andExpect(jsonPath("$.data[0].id").value(course.getId()))
+                .andExpect(jsonPath("$.data[0].name").value(course.getName()));
+    }
+
+    @Test
+    @DisplayName("DELETE /courses/{courseId}/subscription — 구독 취소는 멱등하게 처리된다")
+    void deleteCourseSubscription_success_idempotent() throws Exception {
+        User user = saveUser("ds");
+        Course course = saveCourse("낙동강종주");
+        Cookie cookie = accessCookie(user);
+
+        mockMvc.perform(post("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(delete("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("코스 알림받기 취소 성공"));
+
+        mockMvc.perform(delete("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("이미 알림받기 취소된 코스입니다."));
+
+        assertThat(courseSubscriptionRepository.countByUser_IdAndCourse_Id(user.getId(), course.getId()))
+                .isZero();
     }
 
     @Test
@@ -531,6 +623,12 @@ class ApiFunctionalIntegrationTest {
         Post savedPost = postRepository.saveAndFlush(post);
         postStatusRepository.saveAndFlush(new PostStatus(savedPost));
         return savedPost;
+    }
+
+    private Course saveCourse(String name) {
+        Course course = courseRepository.saveAndFlush(new Course(name + " " + suffix()));
+        flushAndClear();
+        return course;
     }
 
     private Comment saveComment(User user, Post post) {
