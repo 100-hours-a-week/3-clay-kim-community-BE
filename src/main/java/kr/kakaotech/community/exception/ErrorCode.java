@@ -23,6 +23,11 @@ public enum ErrorCode {
     BAD_REQUEST_FILTER("알맞지 않은 조건입니다.", HttpStatus.BAD_REQUEST),
 
     /**
+     * Course 에러
+     */
+    NOT_FOUND_COURSE("존재하지 않는 코스입니다.", HttpStatus.NOT_FOUND),
+
+    /**
      * Comment 에러
      */
     NOT_FOUND_COMMENT("존재하지 않는 댓글입니다.", HttpStatus.NOT_FOUND),
