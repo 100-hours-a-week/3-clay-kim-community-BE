@@ -84,7 +84,7 @@ tasks.withType(Test).configureEach {
 
 tasks.named('test') {
     useJUnitPlatform {
-        excludeTags 'nplusone'
+        excludeTags 'nplusone', 'performance'
     }
     finalizedBy tasks.named('jacocoTestReport')
 }
@@ -97,6 +97,21 @@ tasks.register('nPlusOneTest', Test) {
     shouldRunAfter tasks.named('test')
     useJUnitPlatform {
         includeTags 'nplusone'
+    }
+}
+
+tasks.register('performanceTest', Test) {
+    description = 'Runs local performance observation tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    useJUnitPlatform {
+        includeTags 'performance'
+    }
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
     }
 }
 
