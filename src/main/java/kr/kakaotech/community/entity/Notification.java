@@ -24,7 +24,7 @@ import java.util.UUID;
 @Entity(name = "notifications")
 @Table(name = "notifications",
         uniqueConstraints = @UniqueConstraint(name = "uk_notifications_event_user", columnNames = {"event_id", "user_id"}),
-        indexes = @Index(name = "idx_notifications_user_read_created", columnList = "user_id, read, created_at")
+        indexes = @Index(name = "idx_notifications_user_read_created", columnList = "user_id, is_read, created_at")
 )
 public class Notification {
     @Id
@@ -49,7 +49,7 @@ public class Notification {
     @Column(nullable = false, length = 500)
     private String content;
 
-    @Column(nullable = false)
+    @Column(name = "is_read", nullable = false)
     private Boolean read = false;
 
     @Column(name = "created_at", nullable = false)
