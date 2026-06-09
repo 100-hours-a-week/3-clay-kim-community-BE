@@ -20,6 +20,9 @@ public interface CourseSubscriptionRepository extends JpaRepository<CourseSubscr
     @EntityGraph(attributePaths = "course")
     List<CourseSubscription> findByUser_Id(UUID userId);
 
+    @EntityGraph(attributePaths = "user")
+    List<CourseSubscription> findByCourse_Id(Integer courseId);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         DELETE FROM course_subscriptions

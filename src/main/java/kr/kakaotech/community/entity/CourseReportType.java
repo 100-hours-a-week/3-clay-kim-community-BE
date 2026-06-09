@@ -14,4 +14,8 @@ public enum CourseReportType {
     CourseReportType(String description) {
         this.description = description;
     }
+
+    public CourseStatus toCourseStatus() {
+        return CourseStatus.valueOf(name());
+    }
 }
