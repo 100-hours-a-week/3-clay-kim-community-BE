@@ -6,11 +6,14 @@ import kr.kakaotech.community.entity.CourseReport;
 import kr.kakaotech.community.entity.CourseReportStatus;
 import kr.kakaotech.community.entity.CourseReportType;
 import kr.kakaotech.community.entity.CourseStatus;
+import kr.kakaotech.community.entity.EventOutbox;
+import kr.kakaotech.community.entity.EventOutboxStatus;
 import kr.kakaotech.community.entity.User;
 import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.CourseReportRepository;
 import kr.kakaotech.community.repository.CourseRepository;
+import kr.kakaotech.community.repository.EventOutboxRepository;
 import kr.kakaotech.community.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +43,8 @@ class CourseReportServiceTest {
     UserRepository userRepository;
     @Mock
     CourseReportRepository courseReportRepository;
+    @Mock
+    EventOutboxRepository eventOutboxRepository;
 
     CourseReportService courseReportService;
 
@@ -48,7 +53,8 @@ class CourseReportServiceTest {
         courseReportService = new CourseReportService(
                 courseRepository,
                 userRepository,
-                courseReportRepository
+                courseReportRepository,
+                eventOutboxRepository
         );
     }
 
@@ -86,6 +92,16 @@ class CourseReportServiceTest {
         assertThat(report.getContent()).isEqualTo("강변 진입로 일부 공사 중입니다.");
         assertThat(report.getStatus()).isEqualTo(CourseReportStatus.ACTIVE);
         assertThat(course.getCurrentStatus()).isEqualTo(CourseStatus.CONSTRUCTION);
+
+        ArgumentCaptor<EventOutbox> outboxCaptor = ArgumentCaptor.forClass(EventOutbox.class);
+        verify(eventOutboxRepository).save(outboxCaptor.capture());
+        EventOutbox outbox = outboxCaptor.getValue();
+        assertThat(outbox.getEventId()).isNotNull();
+        assertThat(outbox.getEventType()).isEqualTo("COURSE_REPORT_CREATED");
+        assertThat(outbox.getAggregateType()).isEqualTo("COURSE_REPORT");
+        assertThat(outbox.getAggregateId()).isEqualTo(99L);
+        assertThat(outbox.getPayload()).isEqualTo("{}");
+        assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
     }
 
     @Test
@@ -107,5 +123,6 @@ class CourseReportServiceTest {
                         .isEqualTo(ErrorCode.NOT_FOUND_COURSE));
         verify(userRepository, never()).findById(any());
         verify(courseReportRepository, never()).save(any());
+        verify(eventOutboxRepository, never()).save(any());
     }
 }

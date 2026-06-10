@@ -60,11 +60,30 @@ public class EventOutbox {
     @Column(name = "next_retry_at")
     private LocalDateTime nextRetryAt;
 
-    public EventOutbox(UUID eventId, String eventType, String aggregateType, Long aggregateId, String payload) {
-        this.eventId = eventId;
+    public EventOutbox(String eventType, String aggregateType, Long aggregateId, String payload) {
+        this.eventId = UUID.randomUUID();
         this.eventType = eventType;
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;
         this.payload = payload;
+    }
+
+    public void markProcessed() {
+        this.status = EventOutboxStatus.PROCESSED;
+        this.processedAt = LocalDateTime.now();
+        this.nextRetryAt = null;
+    }
+
+    public void recordFailure(int maxRetryCount, LocalDateTime nextRetryAt) {
+        this.retryCount++;
+
+        if (this.retryCount >= maxRetryCount) {
+            this.status = EventOutboxStatus.FAILED;
+            this.nextRetryAt = null;
+            return;
+        }
+
+        this.status = EventOutboxStatus.PENDING;
+        this.nextRetryAt = nextRetryAt;
     }
 }

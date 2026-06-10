@@ -11,11 +11,13 @@ import kr.kakaotech.community.entity.CourseReportStatus;
 import kr.kakaotech.community.entity.CourseReportType;
 import kr.kakaotech.community.entity.CourseSubscription;
 import kr.kakaotech.community.entity.CourseStatus;
-import kr.kakaotech.community.entity.Notification;
+import kr.kakaotech.community.entity.EventOutbox;
+import kr.kakaotech.community.entity.EventOutboxStatus;
 import kr.kakaotech.community.entity.User;
 import kr.kakaotech.community.repository.CourseReportRepository;
 import kr.kakaotech.community.repository.CourseRepository;
 import kr.kakaotech.community.repository.CourseSubscriptionRepository;
+import kr.kakaotech.community.repository.EventOutboxRepository;
 import kr.kakaotech.community.repository.NotificationRepository;
 import kr.kakaotech.community.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -53,11 +55,12 @@ class CourseReportIntegrationTest {
     @Autowired CourseRepository courseRepository;
     @Autowired CourseReportRepository courseReportRepository;
     @Autowired CourseSubscriptionRepository courseSubscriptionRepository;
+    @Autowired EventOutboxRepository eventOutboxRepository;
     @Autowired NotificationRepository notificationRepository;
     @PersistenceContext EntityManager em;
 
     @Test
-    @DisplayName("POST /courses/{courseId}/reports - 제보, 코스 상태, 구독자 알림을 동기로 저장한다")
+    @DisplayName("POST /courses/{courseId}/reports - 제보, 코스 상태, Outbox 이벤트를 저장한다")
     void registerCourseReport_success() throws Exception {
         // given
         User user = userRepository.saveAndFlush(new User("course-report@test.com", "password", "reporter", "USER"));
@@ -95,25 +98,17 @@ class CourseReportIntegrationTest {
         Course updatedCourse = courseRepository.findById(course.getId()).orElseThrow();
         assertThat(updatedCourse.getCurrentStatus()).isEqualTo(CourseStatus.CONSTRUCTION);
 
-        List<Notification> notifications = notificationRepository.findAll();
-        assertThat(notifications).hasSize(2);
-        assertThat(notifications)
-                .extracting(notification -> notification.getUser().getId())
-                .containsExactlyInAnyOrder(firstSubscriber.getId(), secondSubscriber.getId());
-        assertThat(notifications)
-                .allSatisfy(notification -> {
-                    assertThat(notification.getCourseReport().getId()).isEqualTo(report.getId());
-                    assertThat(notification.getTitle()).contains("코스 상태 제보");
-                    assertThat(notification.getContent()).contains("공사");
-                    assertThat(notification.getRead()).isFalse();
-                });
-        assertThat(notifications)
-                .extracting(Notification::getEventId)
-                .containsOnly(notifications.get(0).getEventId());
-        assertThat(notificationRepository.countByUser_IdAndCourseReport_Id(firstSubscriber.getId(), report.getId()))
-                .isEqualTo(1);
-        assertThat(notificationRepository.countByUser_IdAndCourseReport_Id(secondSubscriber.getId(), report.getId()))
-                .isEqualTo(1);
+        List<EventOutbox> outboxes = eventOutboxRepository.findAll();
+        assertThat(outboxes).hasSize(1);
+        EventOutbox outbox = outboxes.get(0);
+        assertThat(outbox.getEventId()).isNotNull();
+        assertThat(outbox.getEventType()).isEqualTo("COURSE_REPORT_CREATED");
+        assertThat(outbox.getAggregateType()).isEqualTo("COURSE_REPORT");
+        assertThat(outbox.getAggregateId()).isEqualTo(report.getId());
+        assertThat(outbox.getPayload()).isEqualTo("{}");
+        assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
+
+        assertThat(notificationRepository.findAll()).isEmpty();
     }
 
     private void flushAndClear() {
