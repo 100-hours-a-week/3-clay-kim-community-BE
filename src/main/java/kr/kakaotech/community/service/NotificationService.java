@@ -7,9 +7,9 @@ import kr.kakaotech.community.repository.CourseSubscriptionRepository;
 import kr.kakaotech.community.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -21,11 +21,11 @@ public class NotificationService {
     private final CourseSubscriptionRepository courseSubscriptionRepository;
     private final NotificationRepository notificationRepository;
 
-    @Transactional
-    public void createCourseReportNotifications(CourseReport report) {
-        UUID eventId = UUID.randomUUID();
+    public void createCourseReportNotifications(CourseReport report, UUID eventId) {
+        Set<UUID> notifiedUserIds = notificationRepository.findUserIdsByEventId(eventId);
         List<Notification> notifications = courseSubscriptionRepository.findByCourse_Id(report.getCourse().getId()).stream()
                 .map(CourseSubscription::getUser)
+                .filter(user -> !notifiedUserIds.contains(user.getId()))
                 .map(user -> new Notification(
                         user,
                         report,
@@ -34,6 +34,10 @@ public class NotificationService {
                         createContent(report)
                 ))
                 .toList();
+
+        if (notifications.isEmpty()) {
+            return;
+        }
 
         notificationRepository.saveAll(notifications);
     }
