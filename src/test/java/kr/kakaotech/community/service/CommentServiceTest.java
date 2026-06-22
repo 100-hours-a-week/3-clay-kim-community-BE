@@ -8,7 +8,6 @@ import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.CommentRepository;
 import kr.kakaotech.community.repository.PostRepository;
 import kr.kakaotech.community.repository.PostStatusRepository;
-import kr.kakaotech.community.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +36,7 @@ class CommentServiceTest {
     @Mock
     private CommentRepository commentRepository;
     @Mock
-    private UserRepository userRepository;
+    private UserLookupService userLookupService;
     @Mock
     private PostRepository postRepository;
     @Mock
@@ -84,14 +83,14 @@ class CommentServiceTest {
         User user = createTestUser();
         Post post = createTestPost(user);
 
-        given(userRepository.findById(testUserId)).willReturn(Optional.of(user));
+        given(userLookupService.getRequiredUser(testUserId)).willReturn(user);
         given(postRepository.findById(testPostId)).willReturn(Optional.of(post));
 
         // when
         commentService.registerComment(userId, testPostId, request);
 
         // then
-        verify(userRepository, times(1)).findById(testUserId);
+        verify(userLookupService, times(1)).getRequiredUser(testUserId);
         verify(postRepository, times(1)).findById(testPostId);
         verify(commentRepository, times(1)).save(any(Comment.class));
         verify(postStatusRepository, times(1)).incrementCommentCount(testPostId);
@@ -104,7 +103,8 @@ class CommentServiceTest {
         String userId = testUserId.toString();
         CommentRequest request = new CommentRequest();
 
-        given(userRepository.findById(testUserId)).willReturn(Optional.empty());
+        given(userLookupService.getRequiredUser(testUserId))
+                .willThrow(new CustomException(ErrorCode.NOT_FOUND_USER));
 
         //when & then
         assertThatThrownBy(() -> commentService.registerComment(userId, testPostId, request))
@@ -123,7 +123,7 @@ class CommentServiceTest {
         CommentRequest request = new CommentRequest();
         User user = createTestUser();
 
-        given(userRepository.findById(testUserId)).willReturn(Optional.of(user));
+        given(userLookupService.getRequiredUser(testUserId)).willReturn(user);
         given(postRepository.findById(testPostId)).willReturn(Optional.empty());
 
         // when & then

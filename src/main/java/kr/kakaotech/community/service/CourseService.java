@@ -8,7 +8,6 @@ import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.CourseRepository;
 import kr.kakaotech.community.repository.CourseSubscriptionRepository;
-import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,7 @@ import java.util.UUID;
 public class CourseService {
     private final CourseRepository courseRepository;
     private final CourseSubscriptionRepository subscriptionRepository;
-    private final UserRepository userRepository;
+    private final UserLookupService userLookupService;
 
     @Transactional(readOnly = true)
     public List<CourseResponse> getCourses() {
@@ -33,9 +32,7 @@ public class CourseService {
 
     @Transactional(readOnly = true)
     public List<CourseResponse> getSubscribedCourses(UUID userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new CustomException(ErrorCode.NOT_FOUND_USER);
-        }
+        userLookupService.requireExists(userId);
 
         return subscriptionRepository.findByUser_Id(userId).stream()
                 .map(CourseSubscription::getCourse)
@@ -49,8 +46,7 @@ public class CourseService {
             return false;
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+        User user = userLookupService.getRequiredUser(userId);
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COURSE));
         CourseSubscription courseSubscription = new CourseSubscription(user, course);
@@ -65,9 +61,7 @@ public class CourseService {
 
     @Transactional
     public boolean deleteCourseSubscription(Integer courseId, UUID userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new CustomException(ErrorCode.NOT_FOUND_USER);
-        }
+        userLookupService.requireExists(userId);
         if (!courseRepository.existsById(courseId)) {
             throw new CustomException(ErrorCode.NOT_FOUND_COURSE);
         }

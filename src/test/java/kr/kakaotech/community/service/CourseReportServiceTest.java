@@ -14,7 +14,6 @@ import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.CourseReportRepository;
 import kr.kakaotech.community.repository.CourseRepository;
 import kr.kakaotech.community.repository.EventOutboxRepository;
-import kr.kakaotech.community.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +39,7 @@ class CourseReportServiceTest {
     @Mock
     CourseRepository courseRepository;
     @Mock
-    UserRepository userRepository;
+    UserLookupService userLookupService;
     @Mock
     CourseReportRepository courseReportRepository;
     @Mock
@@ -52,7 +51,7 @@ class CourseReportServiceTest {
     void setUp() {
         courseReportService = new CourseReportService(
                 courseRepository,
-                userRepository,
+                userLookupService,
                 courseReportRepository,
                 eventOutboxRepository
         );
@@ -71,7 +70,7 @@ class CourseReportServiceTest {
         ReflectionTestUtils.setField(request, "content", "강변 진입로 일부 공사 중입니다.");
 
         given(courseRepository.findById(courseId)).willReturn(Optional.of(course));
-        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userLookupService.getRequiredUser(userId)).willReturn(user);
         given(courseReportRepository.save(any(CourseReport.class))).willAnswer(invocation -> {
             CourseReport report = invocation.getArgument(0);
             ReflectionTestUtils.setField(report, "id", 99L);
@@ -121,7 +120,7 @@ class CourseReportServiceTest {
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(ErrorCode.NOT_FOUND_COURSE));
-        verify(userRepository, never()).findById(any());
+        verify(userLookupService, never()).getRequiredUser(any());
         verify(courseReportRepository, never()).save(any());
         verify(eventOutboxRepository, never()).save(any());
     }
