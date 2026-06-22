@@ -7,7 +7,6 @@ import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.CourseRepository;
 import kr.kakaotech.community.repository.CourseSubscriptionRepository;
-import kr.kakaotech.community.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,7 +37,7 @@ class CourseServiceTest {
     @Mock
     CourseSubscriptionRepository subscriptionRepository;
     @Mock
-    UserRepository userRepository;
+    UserLookupService userLookupService;
 
     @InjectMocks
     CourseService courseService;
@@ -59,7 +59,6 @@ class CourseServiceTest {
                     new CourseSubscription(user, secondCourse)
             );
 
-            given(userRepository.existsById(userId)).willReturn(true);
             given(subscriptionRepository.findByUser_Id(userId)).willReturn(subscriptions);
 
             // when
@@ -77,7 +76,8 @@ class CourseServiceTest {
         void fail_userNotFound() {
             // given
             UUID userId = UUID.randomUUID();
-            given(userRepository.existsById(userId)).willReturn(false);
+            willThrow(new CustomException(ErrorCode.NOT_FOUND_USER))
+                    .given(userLookupService).requireExists(userId);
 
             // when & then
             assertThatThrownBy(() -> courseService.getSubscribedCourses(userId))
@@ -102,7 +102,7 @@ class CourseServiceTest {
             Course course = new Course("한강종주");
 
             given(subscriptionRepository.existsByUser_IdAndCourse_Id(userId, courseId)).willReturn(false);
-            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(userLookupService.getRequiredUser(userId)).willReturn(user);
             given(courseRepository.findById(courseId)).willReturn(Optional.of(course));
 
             // when
@@ -127,7 +127,7 @@ class CourseServiceTest {
 
             // then
             assertThat(created).isFalse();
-            verify(userRepository, never()).findById(any());
+            verify(userLookupService, never()).getRequiredUser(any());
             verify(courseRepository, never()).findById(any());
             verify(subscriptionRepository, never()).saveAndFlush(any());
         }
@@ -142,7 +142,7 @@ class CourseServiceTest {
             Course course = new Course("한강종주");
 
             given(subscriptionRepository.existsByUser_IdAndCourse_Id(userId, courseId)).willReturn(false);
-            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(userLookupService.getRequiredUser(userId)).willReturn(user);
             given(courseRepository.findById(courseId)).willReturn(Optional.of(course));
             given(subscriptionRepository.saveAndFlush(any(CourseSubscription.class)))
                     .willThrow(new DataIntegrityViolationException("duplicated subscription"));
@@ -163,7 +163,7 @@ class CourseServiceTest {
             User user = mock(User.class);
 
             given(subscriptionRepository.existsByUser_IdAndCourse_Id(userId, courseId)).willReturn(false);
-            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(userLookupService.getRequiredUser(userId)).willReturn(user);
             given(courseRepository.findById(courseId)).willReturn(Optional.empty());
 
             // when & then
@@ -186,7 +186,6 @@ class CourseServiceTest {
             UUID userId = UUID.randomUUID();
             Integer courseId = 1;
 
-            given(userRepository.existsById(userId)).willReturn(true);
             given(courseRepository.existsById(courseId)).willReturn(true);
             given(subscriptionRepository.deleteByUserIdAndCourseId(userId, courseId)).willReturn(1);
 
@@ -204,7 +203,6 @@ class CourseServiceTest {
             UUID userId = UUID.randomUUID();
             Integer courseId = 1;
 
-            given(userRepository.existsById(userId)).willReturn(true);
             given(courseRepository.existsById(courseId)).willReturn(true);
             given(subscriptionRepository.deleteByUserIdAndCourseId(userId, courseId)).willReturn(0);
 
@@ -222,7 +220,6 @@ class CourseServiceTest {
             UUID userId = UUID.randomUUID();
             Integer courseId = 1;
 
-            given(userRepository.existsById(userId)).willReturn(true);
             given(courseRepository.existsById(courseId)).willReturn(false);
 
             // when & then
