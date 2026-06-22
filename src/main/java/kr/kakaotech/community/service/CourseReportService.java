@@ -10,7 +10,6 @@ import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.CourseReportRepository;
 import kr.kakaotech.community.repository.CourseRepository;
 import kr.kakaotech.community.repository.EventOutboxRepository;
-import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +24,7 @@ public class CourseReportService {
     private static final String EMPTY_PAYLOAD = "{}";
 
     private final CourseRepository courseRepository;
-    private final UserRepository userRepository;
+    private final UserLookupService userLookupService;
     private final CourseReportRepository courseReportRepository;
     private final EventOutboxRepository eventOutBoxRepository;
 
@@ -33,8 +32,7 @@ public class CourseReportService {
     public CourseReport registerReport(Integer courseId, ReportRegisterRequest request, UUID userId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COURSE));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+        User user = userLookupService.getRequiredUser(userId);
 
         CourseReport report = courseReportRepository.save(new CourseReport(
                 course,
