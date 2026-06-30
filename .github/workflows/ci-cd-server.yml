@@ -15,8 +15,8 @@ permissions:
   packages: write
 
 env:
-  BACKEND_APP_DIR: ${{ vars.BACKEND_APP_DIR || '/opt/community/V1/docker/app' }}
-  IMAGE_PLATFORM: linux/arm64
+  BACKEND_APP_DIR: ${{ vars.BACKEND_APP_DIR || '/opt/community/V2/docker/app' }}
+  IMAGE_PLATFORM: linux/amd64
 
 jobs:
   test:
@@ -114,9 +114,6 @@ jobs:
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-      GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-      HEALTH_URL: ${{ vars.HEALTH_URL || 'http://127.0.0.1:8080/api/actuator/health' }}
       IMAGE_URI: ${{ needs.build-and-push.outputs.image_uri }}
 
     steps:
@@ -136,19 +133,6 @@ jobs:
           chmod 600 ~/.ssh/community_deploy_key
           ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
-      - name: Upload deploy files
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          SSH_TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
-          REMOTE_DIR="$(printf '%q' "$BACKEND_APP_DIR")"
-          ssh -i ~/.ssh/community_deploy_key -p "$DEPLOY_PORT" "$SSH_TARGET" "mkdir -p ${REMOTE_DIR}"
-          scp -i ~/.ssh/community_deploy_key -P "$DEPLOY_PORT" \
-            deploy/deploy.sh deploy/compose.app.yaml deploy/Caddyfile \
-            "$SSH_TARGET:$BACKEND_APP_DIR/"
-          ssh -i ~/.ssh/community_deploy_key -p "$DEPLOY_PORT" "$SSH_TARGET" "chmod +x ${REMOTE_DIR}/deploy.sh"
-
       - name: Deploy backend
         shell: bash
         run: |
@@ -159,10 +143,7 @@ jobs:
 
           {
             printf 'export BACKEND_IMAGE=%q\n' "$IMAGE_URI"
-            printf 'export GHCR_USERNAME=%q\n' "$GHCR_USERNAME"
-            printf 'export GHCR_TOKEN=%q\n' "$GHCR_TOKEN"
-            printf 'export HEALTH_URL=%q\n' "$HEALTH_URL"
-            printf 'exec ./deploy.sh backend %q\n' "$IMAGE_URI"
+            printf 'exec ./deploy.sh\n'
           } | ssh -i ~/.ssh/community_deploy_key -p "$DEPLOY_PORT" "$SSH_TARGET" \
             "cd ${REMOTE_DIR} && bash -s"
 
