@@ -38,13 +38,13 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       JWT_SECRET: local-monitoring-jwt-secret
       JAVA_TOOL_OPTIONS: >-
-        -Xms256m
-        -Xmx512m
+        -Xms512m
+        -Xmx1g
         -XX:+HeapDumpOnOutOfMemoryError
         -XX:HeapDumpPath=/tmp/community-heapdump.hprof
     ports:
       - "8080:8080"
-    mem_limit: 1g
+    mem_limit: 2g
     depends_on:
       mysql:
         condition: service_healthy
