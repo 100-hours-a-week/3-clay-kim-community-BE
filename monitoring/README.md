@@ -20,7 +20,9 @@ Grafana의 로컬 기본 계정은 `admin` / `admin1234`다. 환경변수 `GRAFA
 Spring 컨테이너는 AWS `t3.small`의 2 GiB 메모리 사양을 기준으로 `-Xms512m -Xmx1g`, 컨테이너 메모리 한도 `2g`로 실행된다. 남은 메모리는 metaspace, code cache, thread stack, direct buffer 등 heap 외 JVM 메모리를 위한 여유 공간이다.
 
 Docker의 `mem_limit`은 Spring 컨테이너에만 적용되며 호스트 OS 메모리는 포함하지 않는다. 실제 `t3.small` 전체 메모리 압박을 동일하게 재현하려면 2 GiB 호스트 또는 전체 컨테이너 메모리 예산을 별도로 제한해야 한다.
-Prometheus는 5초마다 Actuator를 수집하고 데이터를 7일간 보관한다.
+Prometheus는 짧은 Outbox 이벤트의 메모리 변화를 관측하기 위해 1초마다 Actuator를 수집하고 데이터를 7일간 보관한다. Grafana dashboard refresh는 5초지만 그 사이 수집된 1초 시계열을 모두 표시한다.
+
+1초 미만으로 끝나는 이벤트는 Prometheus scrape 사이의 순간 peak를 놓칠 수 있다. 해당 구간의 정확한 peak가 필요하면 더 짧은 간격의 별도 샘플러를 병행한다.
 
 ## PromQL
 
