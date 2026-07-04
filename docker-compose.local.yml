@@ -36,7 +36,9 @@ services:
       DOCKER_DB_USERNAME: root
       DOCKER_DB_PASSWORD: root
       SPRING_DATA_REDIS_HOST: redis
-      JWT_SECRET: local-monitoring-jwt-secret
+      JWT_SECRET: local-monitoring-jwt-secret-at-least-32-bytes
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus,metrics,heapdump
+      MANAGEMENT_ENDPOINT_HEAPDUMP_ACCESS: unrestricted
       JAVA_TOOL_OPTIONS: >-
         -Xms512m
         -Xmx1g
