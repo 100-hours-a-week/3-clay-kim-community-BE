@@ -60,6 +60,9 @@ public class EventOutbox {
     @Column(name = "next_retry_at")
     private LocalDateTime nextRetryAt;
 
+    @Column(name = "processing_started_at")
+    private LocalDateTime processingStartedAt;
+
     public EventOutbox(String eventType, String aggregateType, Long aggregateId, String payload) {
         this.eventId = UUID.randomUUID();
         this.eventType = eventType;
@@ -68,14 +71,22 @@ public class EventOutbox {
         this.payload = payload;
     }
 
+    public void markProcessing(LocalDateTime processingStartedAt) {
+        this.status = EventOutboxStatus.PROCESSING;
+        this.processingStartedAt = processingStartedAt;
+        this.nextRetryAt = null;
+    }
+
     public void markProcessed() {
         this.status = EventOutboxStatus.PROCESSED;
         this.processedAt = LocalDateTime.now();
         this.nextRetryAt = null;
+        this.processingStartedAt = null;
     }
 
     public void recordFailure(int maxRetryCount, LocalDateTime nextRetryAt) {
         this.retryCount++;
+        this.processingStartedAt = null;
 
         if (this.retryCount >= maxRetryCount) {
             this.status = EventOutboxStatus.FAILED;
