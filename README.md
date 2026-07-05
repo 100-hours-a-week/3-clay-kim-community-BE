@@ -114,13 +114,13 @@ Top10 조회는 최근 2개월 완료 게시글로 범위를 제한하고, Redis
 코스 상태 제보 요청 안에서 구독자 알림을 모두 생성하면 사용자 요청 시간이 구독자 수에 직접 영향을 받습니다.
 
 **적용**
-제보 등록 트랜잭션에서는 `event_outbox` 이벤트를 저장하고, Scheduler가 처리 가능한 이벤트를 비관적 락으로 가져와 알림을 생성하도록 분리했습니다.
+제보 등록 트랜잭션에서는 `event_outbox` 이벤트만 저장합니다. Scheduler는 Outbox claim과 상태 기록을 짧은 독립 트랜잭션으로 처리하고, 구독자의 `subscription_id`, `user_id`만 500건씩 keyset 조회해 `JdbcTemplate.batchUpdate`로 저장합니다. 각 chunk는 독립 커밋되며 `(event_id, user_id)` 유니크 충돌만 no-op 처리합니다.
 
 **검증 방식**
-`scripts/k6/outbox-scheduler-load.js`로 제보 등록 API p95/p99, Outbox 처리 지연 p95/p99, backlog, 중복 알림 수, HikariCP active/pending connection을 측정합니다.
+H2 통합 테스트로 projection 조회와 재처리 멱등성을 확인합니다. 로컬 MySQL 8.4.8의 구독자 100,000명 코스에서 `EXPLAIN ANALYZE`한 첫 500건 keyset 조회는 `PRIMARY` range scan으로 600건을 읽고 500건을 반환했으며 실제 실행 시간은 1.54~1.65ms였습니다. 추가 인덱스는 만들지 않았습니다.
 
 **남은 개선 방향**
-현재 알림 생성은 구독자를 한 번에 조회한 뒤 `saveAll`로 저장합니다. 대량 구독자 이벤트에서는 Hibernate 영속성 컨텍스트에 Notification 엔티티가 누적될 수 있으므로, 구독자 chunk 조회와 batch insert로 트랜잭션당 보유 엔티티 수를 제한하는 개선을 진행할 예정입니다.
+MySQL에서 chunk 부분 실패·재처리·동시 claim을 통합 테스트하고, 동일한 100,000명 조건에서 처리 시간, Peak Heap/RSS, GC, HikariCP active/pending을 개선 전 기준선과 비교합니다.
 
 ## 대용량 테스트 데이터
 
