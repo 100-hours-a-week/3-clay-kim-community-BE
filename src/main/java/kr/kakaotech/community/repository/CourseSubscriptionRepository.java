@@ -1,6 +1,7 @@
 package kr.kakaotech.community.repository;
 
 import kr.kakaotech.community.entity.CourseSubscription;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -20,8 +21,18 @@ public interface CourseSubscriptionRepository extends JpaRepository<CourseSubscr
     @EntityGraph(attributePaths = "course")
     List<CourseSubscription> findByUser_Id(UUID userId);
 
-    @EntityGraph(attributePaths = "user")
-    List<CourseSubscription> findByCourse_Id(Integer courseId);
+    @Query("""
+            SELECT cs.id AS subscriptionId, cs.user.id AS userId
+            FROM course_subscriptions cs
+            WHERE cs.course.id = :courseId
+              AND cs.id > :lastId
+            ORDER BY cs.id
+            """)
+    List<SubscriberProjection> findSubscriberChunk(
+            @Param("courseId") Integer courseId,
+            @Param("lastId") Long lastId,
+            Pageable pageable
+    );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
@@ -30,4 +41,10 @@ public interface CourseSubscriptionRepository extends JpaRepository<CourseSubscr
           AND course_id = :courseId
     """, nativeQuery = true)
     int deleteByUserIdAndCourseId(@Param("userId") UUID userId, @Param("courseId") Integer courseId);
+
+    interface SubscriberProjection {
+        Long getSubscriptionId();
+
+        UUID getUserId();
+    }
 }

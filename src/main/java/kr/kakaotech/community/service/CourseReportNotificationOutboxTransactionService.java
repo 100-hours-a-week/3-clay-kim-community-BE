@@ -4,12 +4,16 @@ import kr.kakaotech.community.entity.EventOutbox;
 import kr.kakaotech.community.entity.EventOutboxStatus;
 import kr.kakaotech.community.repository.EventOutboxRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.ByteBuffer;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,8 +25,15 @@ public class CourseReportNotificationOutboxTransactionService {
     private static final int MAX_RETRY_COUNT = 3;
     private static final long BASE_RETRY_DELAY_SECONDS = 5;
     private static final long PROCESSING_LEASE_MINUTES = 5;
+    private static final String INSERT_NOTIFICATIONS_SQL = """
+            INSERT INTO notifications (
+                user_id, course_report_id, event_id, title, content, is_read, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE event_id = event_id
+            """;
 
     private final EventOutboxRepository eventOutboxRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<Claim> claimNext() {
@@ -77,6 +88,25 @@ public class CourseReportNotificationOutboxTransactionService {
         ));
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void insertNotificationChunk(
+            List<UUID> userIds,
+            Long courseReportId,
+            UUID eventId,
+            String title,
+            String content
+    ) {
+        byte[] eventIdBytes = uuidToBytes(eventId);
+        Timestamp createdAt = Timestamp.valueOf(LocalDateTime.now());
+        List<Object[]> batchArgs = userIds.stream()
+                .map(userId -> new Object[]{
+                        uuidToBytes(userId), courseReportId, eventIdBytes, title, content, false, createdAt
+                })
+                .toList();
+
+        jdbcTemplate.batchUpdate(INSERT_NOTIFICATIONS_SQL, batchArgs);
+    }
+
     private boolean isCurrentClaim(EventOutbox eventOutbox, Claim claim) {
         return eventOutbox.getStatus() == EventOutboxStatus.PROCESSING
                 && claim.processingStartedAt().equals(eventOutbox.getProcessingStartedAt());
@@ -84,6 +114,13 @@ public class CourseReportNotificationOutboxTransactionService {
 
     private long calculateRetryDelaySeconds(int retryCount) {
         return BASE_RETRY_DELAY_SECONDS * (1L << Math.max(0, retryCount - 1));
+    }
+
+    private byte[] uuidToBytes(UUID uuid) {
+        return ByteBuffer.allocate(16)
+                .putLong(uuid.getMostSignificantBits())
+                .putLong(uuid.getLeastSignificantBits())
+                .array();
     }
 
     public record Claim(Long outboxId, UUID eventId, Long aggregateId, LocalDateTime processingStartedAt) {
