@@ -4,30 +4,34 @@ import kr.kakaotech.community.dto.response.NotificationListResponse;
 import kr.kakaotech.community.dto.response.NotificationResponse;
 import kr.kakaotech.community.dto.response.NotificationUnreadCountResponse;
 import kr.kakaotech.community.entity.CourseReport;
-import kr.kakaotech.community.entity.CourseSubscription;
 import kr.kakaotech.community.entity.Notification;
 import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.CourseSubscriptionRepository;
 import kr.kakaotech.community.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
     private static final int TITLE_MAX_LENGTH = 100;
     private static final int CONTENT_MAX_LENGTH = 500;
     private static final int MAX_PAGE_SIZE = 20;
+    private static final int NOTIFICATION_CHUNK_SIZE = 500;
+    private static final PageRequest NOTIFICATION_CHUNK_PAGE = PageRequest.of(0, NOTIFICATION_CHUNK_SIZE);
 
     private final CourseSubscriptionRepository courseSubscriptionRepository;
     private final NotificationRepository notificationRepository;
+    private final CourseReportNotificationOutboxTransactionService transactionService;
 
     @Transactional(readOnly = true)
     public NotificationUnreadCountResponse getUnreadCount(UUID userId) {
@@ -61,24 +65,42 @@ public class NotificationService {
     }
 
     public void createCourseReportNotifications(CourseReport report, UUID eventId) {
-        Set<UUID> notifiedUserIds = notificationRepository.findUserIdsByEventId(eventId);
-        List<Notification> notifications = courseSubscriptionRepository.findByCourse_Id(report.getCourse().getId()).stream()
-                .map(CourseSubscription::getUser)
-                .filter(user -> !notifiedUserIds.contains(user.getId()))
-                .map(user -> new Notification(
-                        user,
-                        report,
-                        eventId,
-                        createTitle(report),
-                        createContent(report)
-                ))
-                .toList();
+        long startedAt = System.nanoTime();
+        long lastSubscriptionId = 0;
+        long subscriberCount = 0;
+        int chunkCount = 0;
+        String title = createTitle(report);
+        String content = createContent(report);
 
-        if (notifications.isEmpty()) {
-            return;
+        while (true) {
+            var subscribers = courseSubscriptionRepository.findSubscriberChunk(
+                    report.getCourse().getId(),
+                    lastSubscriptionId,
+                    NOTIFICATION_CHUNK_PAGE
+            );
+            if (subscribers.isEmpty()) {
+                break;
+            }
+
+            transactionService.insertNotificationChunk(
+                    subscribers.stream().map(CourseSubscriptionRepository.SubscriberProjection::getUserId).toList(),
+                    report.getId(),
+                    eventId,
+                    title,
+                    content
+            );
+            lastSubscriptionId = subscribers.getLast().getSubscriptionId();
+            subscriberCount += subscribers.size();
+            chunkCount++;
         }
 
-        notificationRepository.saveAll(notifications);
+        log.info(
+                "Course report notifications processed. eventId={}, subscriberCount={}, chunkCount={}, durationMs={}",
+                eventId,
+                subscriberCount,
+                chunkCount,
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt)
+        );
     }
 
     private String createTitle(CourseReport report) {

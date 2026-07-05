@@ -6,12 +6,17 @@ import kr.kakaotech.community.repository.EventOutboxRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -24,6 +29,8 @@ class CourseReportNotificationOutboxTransactionServiceTest {
 
     @Mock
     EventOutboxRepository eventOutboxRepository;
+    @Mock
+    JdbcTemplate jdbcTemplate;
 
     @Test
     @DisplayName("claim은 처리할 이벤트를 PROCESSING으로 변경하고 lease 시작 시각을 기록한다")
@@ -117,8 +124,35 @@ class CourseReportNotificationOutboxTransactionServiceTest {
         assertThat(outbox.getProcessingStartedAt()).isEqualTo(currentClaimStartedAt);
     }
 
+    @Test
+    @DisplayName("알림 chunk를 UUID binary JDBC batch로 저장한다")
+    void insertNotificationChunk_usesJdbcBatch() {
+        UUID userId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+
+        transactionService().insertNotificationChunk(
+                List.of(userId),
+                99L,
+                eventId,
+                "제목",
+                "내용"
+        );
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Object[]>> batchCaptor = ArgumentCaptor.forClass(List.class);
+        verify(jdbcTemplate).batchUpdate(sqlCaptor.capture(), batchCaptor.capture());
+
+        assertThat(sqlCaptor.getValue())
+                .contains("ON DUPLICATE KEY UPDATE")
+                .doesNotContain("INSERT IGNORE");
+        assertThat(batchCaptor.getValue()).hasSize(1);
+        assertThat((byte[]) batchCaptor.getValue().get(0)[0]).containsExactly(uuidToBytes(userId));
+        assertThat((byte[]) batchCaptor.getValue().get(0)[2]).containsExactly(uuidToBytes(eventId));
+    }
+
     private CourseReportNotificationOutboxTransactionService transactionService() {
-        return new CourseReportNotificationOutboxTransactionService(eventOutboxRepository);
+        return new CourseReportNotificationOutboxTransactionService(eventOutboxRepository, jdbcTemplate);
     }
 
     private EventOutbox outbox(int retryCount) {
@@ -143,5 +177,12 @@ class CourseReportNotificationOutboxTransactionServiceTest {
                 outbox.getAggregateId(),
                 processingStartedAt
         );
+    }
+
+    private byte[] uuidToBytes(UUID uuid) {
+        return ByteBuffer.allocate(16)
+                .putLong(uuid.getMostSignificantBits())
+                .putLong(uuid.getLeastSignificantBits())
+                .array();
     }
 }
