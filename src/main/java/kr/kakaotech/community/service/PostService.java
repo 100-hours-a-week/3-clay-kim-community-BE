@@ -8,7 +8,6 @@ import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.PostRepository;
 import kr.kakaotech.community.repository.PostStatusRepository;
-import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -30,7 +29,7 @@ import java.util.UUID;
 @Service
 public class PostService {
 
-    private final UserRepository userRepository;
+    private final UserLookupService userLookupService;
     private final PostRepository postRepository;
     private final PostStatusRepository postStatusRepository;
     private final ImageService imageService;
@@ -51,8 +50,7 @@ public class PostService {
             throw new CustomException(ErrorCode.IMAGE_TOO_MANY);
         }
 
-        User getUser = userRepository.findById(UUID.fromString(userId)).orElseThrow(() ->
-                new CustomException(ErrorCode.NOT_FOUND_USER));
+        User getUser = userLookupService.getRequiredUser(UUID.fromString(userId));
 
         Post post = Post.toEntity(request, getUser);
 

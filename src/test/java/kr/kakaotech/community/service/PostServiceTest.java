@@ -8,7 +8,6 @@ import kr.kakaotech.community.exception.CustomException;
 import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.PostRepository;
 import kr.kakaotech.community.repository.PostStatusRepository;
-import kr.kakaotech.community.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,7 +34,7 @@ import static org.mockito.Mockito.*;
 class PostServiceTest {
 
     @Mock
-    UserRepository userRepository;
+    UserLookupService userLookupService;
     @Mock
     PostRepository postRepository;
     @Mock
@@ -95,7 +94,7 @@ class PostServiceTest {
             PostRegisterRequest request = new PostRegisterRequest("제목", "내용", null, "IN_PROGRESS");
             Post savedPost = createPost(1, user);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(userLookupService.getRequiredUser(userId)).willReturn(user);
             given(postRepository.saveAndFlush(any(Post.class))).willReturn(savedPost);
             given(postStatusRepository.save(any(PostStatus.class))).willReturn(null);
 
@@ -129,7 +128,8 @@ class PostServiceTest {
             // given
             PostRegisterRequest request = new PostRegisterRequest("제목", "내용", null, "IN_PROGRESS");
             UUID unknownId = UUID.randomUUID();
-            given(userRepository.findById(unknownId)).willReturn(Optional.empty());
+            given(userLookupService.getRequiredUser(unknownId))
+                    .willThrow(new CustomException(ErrorCode.NOT_FOUND_USER));
 
             // when & then
             assertThatThrownBy(() -> postService.registerPost(unknownId.toString(), request, null))

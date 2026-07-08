@@ -10,7 +10,6 @@ import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.CommentRepository;
 import kr.kakaotech.community.repository.PostRepository;
 import kr.kakaotech.community.repository.PostStatusRepository;
-import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +23,7 @@ import java.util.UUID;
 public class CommentService {
 
     private final CommentRepository commentRepository;
-    private final UserRepository userRepository;
+    private final UserLookupService userLookupService;
     private final PostRepository postRepository;
     private final PostStatusRepository postStatusRepository;
 
@@ -33,8 +32,7 @@ public class CommentService {
      */
     @Transactional
     public void registerComment(String userId, int postId, CommentRequest request) {
-        User user = userRepository.findById(UUID.fromString(userId))
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+        User user = userLookupService.getRequiredUser(UUID.fromString(userId));
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -101,4 +99,3 @@ public class CommentService {
         return comment;
     }
 }
-

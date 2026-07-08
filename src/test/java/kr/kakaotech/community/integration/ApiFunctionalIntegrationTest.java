@@ -7,12 +7,20 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.Cookie;
 import kr.kakaotech.community.auth.jwt.JwtProvider;
 import kr.kakaotech.community.entity.Comment;
+import kr.kakaotech.community.entity.Course;
+import kr.kakaotech.community.entity.CourseReport;
+import kr.kakaotech.community.entity.CourseReportType;
+import kr.kakaotech.community.entity.Notification;
 import kr.kakaotech.community.entity.Post;
 import kr.kakaotech.community.entity.PostStatus;
 import kr.kakaotech.community.entity.PostType;
 import kr.kakaotech.community.entity.User;
 import kr.kakaotech.community.repository.CommentRepository;
+import kr.kakaotech.community.repository.CourseReportRepository;
+import kr.kakaotech.community.repository.CourseRepository;
+import kr.kakaotech.community.repository.CourseSubscriptionRepository;
 import kr.kakaotech.community.repository.LikeRepository;
+import kr.kakaotech.community.repository.NotificationRepository;
 import kr.kakaotech.community.repository.PostRepository;
 import kr.kakaotech.community.repository.PostStatusRepository;
 import kr.kakaotech.community.repository.UserRepository;
@@ -37,6 +45,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -61,6 +70,10 @@ class ApiFunctionalIntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired UserRepository userRepository;
+    @Autowired CourseRepository courseRepository;
+    @Autowired CourseSubscriptionRepository courseSubscriptionRepository;
+    @Autowired CourseReportRepository courseReportRepository;
+    @Autowired NotificationRepository notificationRepository;
     @Autowired PostRepository postRepository;
     @Autowired PostStatusRepository postStatusRepository;
     @Autowired CommentRepository commentRepository;
@@ -124,6 +137,217 @@ class ApiFunctionalIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("accessToken", 0))
                 .andExpect(cookie().maxAge("refreshToken", 0));
+    }
+
+    @Test
+    @DisplayName("GET /courses — 인증 없이 코스 목록을 조회한다")
+    void getCourses_success_withoutAuth() throws Exception {
+        Course course = saveCourse("한강종주");
+
+        mockMvc.perform(get("/api/courses")
+                        .contextPath("/api"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("코스 목록 조회 성공"))
+                .andExpect(jsonPath("$.data[0].id").value(course.getId()))
+                .andExpect(jsonPath("$.data[0].name").value(course.getName()))
+                .andExpect(jsonPath("$.data[0].currentStatus").value("NORMAL"));
+    }
+
+    @Test
+    @DisplayName("POST /courses/{courseId}/subscription — 중복 등록해도 구독은 1건만 유지된다")
+    void subscribeCourse_success_idempotent() throws Exception {
+        User user = saveUser("cs");
+        Course course = saveCourse("북한강종주");
+        Cookie cookie = accessCookie(user);
+
+        mockMvc.perform(post("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("코스 알림받기 등록 성공"));
+
+        mockMvc.perform(post("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("이미 알림받기 등록된 코스입니다."));
+
+        assertThat(courseSubscriptionRepository.countByUser_IdAndCourse_Id(user.getId(), course.getId()))
+                .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("GET /courses/subscriptions — 사용자의 코스 구독 목록을 조회한다")
+    void getSubscribedCourses_success() throws Exception {
+        User user = saveUser("gs");
+        Course course = saveCourse("새재자전거길");
+        Cookie cookie = accessCookie(user);
+
+        mockMvc.perform(post("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/courses/subscriptions")
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("코스 알림받기 목록 조회 성공"))
+                .andExpect(jsonPath("$.data[0].id").value(course.getId()))
+                .andExpect(jsonPath("$.data[0].name").value(course.getName()));
+    }
+
+    @Test
+    @DisplayName("DELETE /courses/{courseId}/subscription — 구독 취소는 멱등하게 처리된다")
+    void deleteCourseSubscription_success_idempotent() throws Exception {
+        User user = saveUser("ds");
+        Course course = saveCourse("낙동강종주");
+        Cookie cookie = accessCookie(user);
+
+        mockMvc.perform(post("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(delete("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("코스 알림받기 취소 성공"));
+
+        mockMvc.perform(delete("/api/courses/{courseId}/subscription", course.getId())
+                        .contextPath("/api")
+                        .cookie(cookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("이미 알림받기 취소된 코스입니다."));
+
+        assertThat(courseSubscriptionRepository.countByUser_IdAndCourse_Id(user.getId(), course.getId()))
+                .isZero();
+    }
+
+    @Test
+    @DisplayName("GET /me/notifications/unread-count — 내 안 읽은 알림 개수만 조회한다")
+    void getNotificationUnreadCount_success_onlyMine() throws Exception {
+        User user = saveUser("nu");
+        User otherUser = saveUser("nuo");
+        Course course = saveCourse("금강종주");
+        CourseReport report = saveCourseReport(course, user);
+        saveNotification(user, report, false);
+        saveNotification(user, report, false);
+        saveNotification(user, report, true);
+        saveNotification(otherUser, report, false);
+
+        mockMvc.perform(get("/api/me/notifications/unread-count")
+                        .contextPath("/api")
+                        .cookie(accessCookie(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("안 읽은 알림 개수 조회 성공"))
+                .andExpect(jsonPath("$.data.unreadCount").value(2));
+    }
+
+    @Test
+    @DisplayName("GET /me/notifications — 내 알림 목록만 커서 기반으로 조회한다")
+    void getNotifications_success_cursorPagingOnlyMine() throws Exception {
+        User user = saveUser("nl");
+        User otherUser = saveUser("nlo");
+        Course course = saveCourse("섬진강종주");
+        CourseReport report = saveCourseReport(course, user);
+        Notification first = saveNotification(user, report, false);
+        Notification second = saveNotification(user, report, false);
+        Notification third = saveNotification(user, report, false);
+        saveNotification(otherUser, report, false);
+
+        MvcResult firstPage = mockMvc.perform(get("/api/me/notifications")
+                        .contextPath("/api")
+                        .param("size", "2")
+                        .cookie(accessCookie(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("알림 목록 조회 성공"))
+                .andExpect(jsonPath("$.data.notifications[0].id").value(third.getId()))
+                .andExpect(jsonPath("$.data.notifications[1].id").value(second.getId()))
+                .andExpect(jsonPath("$.data.notifications[0].courseReportId").value(report.getId()))
+                .andExpect(jsonPath("$.data.notifications[0].courseId").value(course.getId()))
+                .andExpect(jsonPath("$.data.hasNext").value(true))
+                .andExpect(jsonPath("$.data.nextCursor").value(second.getId()))
+                .andReturn();
+
+        Long nextCursor = jsonNode(firstPage).path("data").path("nextCursor").asLong();
+
+        mockMvc.perform(get("/api/me/notifications")
+                        .contextPath("/api")
+                        .param("cursor", nextCursor.toString())
+                        .param("size", "2")
+                        .cookie(accessCookie(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.notifications[0].id").value(first.getId()))
+                .andExpect(jsonPath("$.data.notifications.length()").value(1))
+                .andExpect(jsonPath("$.data.hasNext").value(false))
+                .andExpect(jsonPath("$.data.nextCursor").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("GET /me/notifications — 페이지 크기는 최대 20개로 제한한다")
+    void getNotifications_fail_sizeTooLarge() throws Exception {
+        User user = saveUser("nls");
+
+        mockMvc.perform(get("/api/me/notifications")
+                        .contextPath("/api")
+                        .param("size", "21")
+                        .cookie(accessCookie(user)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PATCH /me/notifications/{id}/read — 내 알림을 멱등하게 읽음 처리한다")
+    void markNotificationRead_success_idempotent() throws Exception {
+        User user = saveUser("nr");
+        Course course = saveCourse("오천자전거길");
+        CourseReport report = saveCourseReport(course, user);
+        Notification notification = saveNotification(user, report, false);
+
+        mockMvc.perform(patch("/api/me/notifications/{notificationId}/read", notification.getId())
+                        .contextPath("/api")
+                        .cookie(accessCookie(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("알림 읽음 처리 성공"));
+
+        flushAndClear();
+        assertThat(notificationRepository.findById(notification.getId()).orElseThrow().getRead()).isTrue();
+
+        mockMvc.perform(patch("/api/me/notifications/{notificationId}/read", notification.getId())
+                        .contextPath("/api")
+                        .cookie(accessCookie(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("알림 읽음 처리 성공"));
+    }
+
+    @Test
+    @DisplayName("PATCH /me/notifications/{id}/read — 다른 사용자의 알림은 읽음 처리할 수 없다")
+    void markNotificationRead_fail_otherUserNotification() throws Exception {
+        User user = saveUser("nf");
+        User otherUser = saveUser("nfo");
+        Course course = saveCourse("제주환상자전거길");
+        CourseReport report = saveCourseReport(course, otherUser);
+        Notification otherNotification = saveNotification(otherUser, report, false);
+
+        mockMvc.perform(patch("/api/me/notifications/{notificationId}/read", otherNotification.getId())
+                        .contextPath("/api")
+                        .cookie(accessCookie(user)))
+                .andExpect(status().isNotFound());
+
+        flushAndClear();
+        assertThat(notificationRepository.findById(otherNotification.getId()).orElseThrow().getRead()).isFalse();
+    }
+
+    @Test
+    @DisplayName("PATCH /me/notifications/{id}/read — 알림 ID는 양수여야 한다")
+    void markNotificationRead_fail_nonPositiveNotificationId() throws Exception {
+        User user = saveUser("nfi");
+
+        mockMvc.perform(patch("/api/me/notifications/{notificationId}/read", 0)
+                        .contextPath("/api")
+                        .cookie(accessCookie(user)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -518,6 +742,30 @@ class ApiFunctionalIntegrationTest {
         return userRepository.saveAndFlush(user);
     }
 
+    private CourseReport saveCourseReport(Course course, User user) {
+        CourseReport report = new CourseReport(
+                course,
+                user,
+                CourseReportType.CONSTRUCTION,
+                "강변 진입로 일부 공사 중입니다."
+        );
+        return courseReportRepository.saveAndFlush(report);
+    }
+
+    private Notification saveNotification(User user, CourseReport report, boolean read) {
+        Notification notification = new Notification(
+                user,
+                report,
+                UUID.randomUUID(),
+                "코스 상태 제보: " + report.getCourse().getName(),
+                "공사 - 강변 진입로 일부 공사 중입니다."
+        );
+        if (read) {
+            notification.markAsRead();
+        }
+        return notificationRepository.saveAndFlush(notification);
+    }
+
     private Post savePost(User user) {
         Post post = new Post(
                 "제목 " + suffix(),
@@ -531,6 +779,12 @@ class ApiFunctionalIntegrationTest {
         Post savedPost = postRepository.saveAndFlush(post);
         postStatusRepository.saveAndFlush(new PostStatus(savedPost));
         return savedPost;
+    }
+
+    private Course saveCourse(String name) {
+        Course course = courseRepository.saveAndFlush(new Course(name + " " + suffix()));
+        flushAndClear();
+        return course;
     }
 
     private Comment saveComment(User user, Post post) {

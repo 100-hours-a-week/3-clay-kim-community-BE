@@ -9,7 +9,6 @@ import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.LikeRepository;
 import kr.kakaotech.community.repository.PostRepository;
 import kr.kakaotech.community.repository.PostStatusRepository;
-import kr.kakaotech.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,7 +24,7 @@ import java.util.UUID;
 public class LikeService {
 
     private final LikeRepository likeRepository;
-    private final UserRepository userRepository;
+    private final UserLookupService userLookupService;
     private final PostRepository postRepository;
     private final PostStatusRepository postStatusRepository;
 
@@ -50,7 +49,7 @@ public class LikeService {
         // Reference 객체 사용해서 select 문 안날아가게 함
         try {
             // getReferenceById 사용 - 성능 최적화
-            User userRef = userRepository.getReferenceById(userId);
+            User userRef = userLookupService.getReference(userId);
             Post postRef = postRepository.getReferenceById(postId);
 
             PostLike newLike = new PostLike(userRef, postRef);

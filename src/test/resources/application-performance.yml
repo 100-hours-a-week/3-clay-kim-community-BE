@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: ${PERFORMANCE_DATASOURCE_URL}
+    username: ${PERFORMANCE_DATASOURCE_USERNAME}
+    password: ${PERFORMANCE_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      data-source-properties:
+        rewriteBatchedStatements: true
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+        use_sql_comments: false
+        jdbc:
+          batch_size: 1000
+        order_inserts: true
+        order_updates: true
+    show-sql: false

@@ -7,7 +7,6 @@ import kr.kakaotech.community.exception.ErrorCode;
 import kr.kakaotech.community.repository.LikeRepository;
 import kr.kakaotech.community.repository.PostRepository;
 import kr.kakaotech.community.repository.PostStatusRepository;
-import kr.kakaotech.community.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -34,7 +33,7 @@ class LikeServiceTest {
     @Mock
     LikeRepository likeRepository;
     @Mock
-    UserRepository userRepository;
+    UserLookupService userLookupService;
     @Mock
     PostRepository postRepository;
     @Mock
@@ -70,7 +69,7 @@ class LikeServiceTest {
 
             given(postStatusRepository.findByIdForUpdate(postId)).willReturn(Optional.of(postStatus));
             given(likeRepository.findByUser_IdAndPost_Id(userId, postId)).willReturn(Optional.empty());
-            given(userRepository.getReferenceById(userId)).willReturn(userRef);
+            given(userLookupService.getReference(userId)).willReturn(userRef);
             given(postRepository.getReferenceById(postId)).willReturn(postRef);
             given(likeRepository.save(any(PostLike.class))).willReturn(null);
             // getLikeCount 내부 호출
@@ -122,7 +121,7 @@ class LikeServiceTest {
 
             given(postStatusRepository.findByIdForUpdate(postId)).willReturn(Optional.of(postStatus));
             given(likeRepository.findByUser_IdAndPost_Id(userId, postId)).willReturn(Optional.empty());
-            given(userRepository.getReferenceById(userId)).willReturn(userRef);
+            given(userLookupService.getReference(userId)).willReturn(userRef);
             given(postRepository.getReferenceById(postId)).willReturn(postRef);
             given(likeRepository.save(any(PostLike.class)))
                     .willThrow(new DataIntegrityViolationException("FK constraint violation"));

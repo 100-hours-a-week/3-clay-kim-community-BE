@@ -1,4 +1,4 @@
-name: Deploy Branch to EC2
+name: Deploy Branch to Server
 
 on:
   workflow_dispatch:
@@ -15,17 +15,25 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 concurrency:
-  group: deploy-branch-ec2
+  group: deploy-branch-server
   cancel-in-progress: false
+
+env:
+  BACKEND_APP_DIR: ${{ vars.BACKEND_APP_DIR || '/opt/community/V2/docker/app' }}
+  IMAGE_PLATFORM: linux/amd64
 
 jobs:
   deploy-branch:
     runs-on: ubuntu-latest
     environment: production
     env:
-      BACKEND_APP_DIR: /opt/community/V1/docker/app
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
 
     steps:
       - name: Checkout target branch
@@ -50,16 +58,6 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build -x test --console=plain
 
-      - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -68,17 +66,30 @@ jobs:
 
       - name: Resolve image metadata
         id: meta
+        shell: bash
         run: |
+          set -euo pipefail
+
           SAFE_BRANCH="$(printf '%s' "${{ inputs.branch }}" \
             | tr '[:upper:]' '[:lower:]' \
             | sed -E 's/[^a-z0-9._-]+/-/g; s/^-+//; s/-+$//' \
             | cut -c1-80)"
           SHORT_SHA="$(git rev-parse --short=12 HEAD)"
+          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY,,}"
           IMAGE_TAG="manual-${SAFE_BRANCH}-${SHORT_SHA}-${GITHUB_RUN_NUMBER}"
 
-          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
-          echo "image_uri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          {
+            echo "short_sha=${SHORT_SHA}"
+            echo "image_tag=${IMAGE_TAG}"
+            echo "image_uri=${IMAGE_NAME}:${IMAGE_TAG}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push docker image
         uses: docker/build-push-action@v6
@@ -86,29 +97,40 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          platforms: linux/arm64
+          platforms: ${{ env.IMAGE_PLATFORM }}
           tags: ${{ steps.meta.outputs.image_uri }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Send SSM Command
-        env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          BACK_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
-          TARGET_BRANCH: ${{ inputs.branch }}
-          TARGET_SHA: ${{ steps.meta.outputs.short_sha }}
+      - name: Configure SSH
+        shell: bash
         run: |
-          DEPLOY_COMMAND="AWS_REGION=${AWS_REGION} AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} BACK_REPOSITORY=${BACK_REPOSITORY} bash deploy.sh backend ${IMAGE_TAG}"
+          set -euo pipefail
 
-          aws ssm send-command \
-            --region "${AWS_REGION}" \
-            --document-name "AWS-RunShellScript" \
-            --targets "Key=tag:Environment,Values=prod" "Key=tag:DeployTarget,Values=community-app" \
-            --comment "Deploy Backend branch ${TARGET_BRANCH} (${TARGET_SHA})" \
-            --parameters "commands=[\"cd ${BACKEND_APP_DIR}\",\"${DEPLOY_COMMAND}\"]" \
-            --output text
+          : "${DEPLOY_HOST:?DEPLOY_HOST secret is required}"
+          : "${DEPLOY_USER:?DEPLOY_USER secret is required}"
+          : "${DEPLOY_SSH_KEY:?DEPLOY_SSH_KEY secret is required}"
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" | tr -d '\r' > ~/.ssh/community_deploy_key
+          chmod 600 ~/.ssh/community_deploy_key
+          ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy backend
+        shell: bash
+        env:
+          IMAGE_URI: ${{ steps.meta.outputs.image_uri }}
+        run: |
+          set -euo pipefail
+
+          SSH_TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
+          REMOTE_DIR="$(printf '%q' "$BACKEND_APP_DIR")"
+
+          {
+            printf 'export BACKEND_IMAGE=%q\n' "$IMAGE_URI"
+            printf 'exec ./deploy.sh\n'
+          } | ssh -i ~/.ssh/community_deploy_key -p "$DEPLOY_PORT" "$SSH_TARGET" \
+            "cd ${REMOTE_DIR} && bash -s"
 
       - name: Deployment summary
         run: |
@@ -116,6 +138,7 @@ jobs:
             echo "### Branch deployment"
             echo "- Branch: \`${{ inputs.branch }}\`"
             echo "- Commit: \`${{ steps.meta.outputs.short_sha }}\`"
-            echo "- Image tag: \`${{ steps.meta.outputs.image_tag }}\`"
+            echo "- Image: \`${{ steps.meta.outputs.image_uri }}\`"
             echo "- Tests: \`${{ inputs.run_tests }}\`"
+            echo "- Transport: \`SSH\`"
           } >> "$GITHUB_STEP_SUMMARY"
